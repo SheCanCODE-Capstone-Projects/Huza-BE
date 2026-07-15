@@ -1,0 +1,82 @@
+spring:
+  application:
+    name: huza-auth-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/huza_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:12345}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME}
+    password: ${GMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  security:
+    user:
+      name: admin
+      password: admin
+
+server:
+  port: 8080
+
+app:
+  frontend:
+    url: http://localhost:3000
+  verification:
+    token:
+      expiration: 86400000
+  otp:
+    expiration: 600000
+    length: 6
+
+logging:
+  level:
+    com.example.auth: DEBUG
+    org.springframework.mail: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+  file:
+    name: logs/huza-auth-service.log
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    filter: true
+    display-request-duration: true
+    doc-expansion: none
+  show-actuator: false
+  packages-to-scan: com.example.auth
+  paths-to-match: /api/**
