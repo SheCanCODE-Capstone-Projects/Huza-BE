@@ -1,3 +1,4 @@
+
 spring:
   application:
     name: huza-auth-service

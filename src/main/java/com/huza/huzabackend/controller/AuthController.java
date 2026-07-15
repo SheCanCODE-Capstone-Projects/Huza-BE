@@ -1,13 +1,13 @@
-package huza.huzabackend.controller;
+package com.huza.huzabackend.controller;
 
-import huza.huzabackend.dto.ApiResponse;
-import huza.huzabackend.dto.RegisterRequest;
-import huza.huzabackend.dto.OtpRequest;
-import huza.huzabackend.entity.User;
-import huza.huzabackend.service.EmailService;
-import huza.huzabackend.service.OtpService;
-import huza.huzabackend.service.UserService;
-import huza.huzabackend.service.VerificationTokenService;
+import com.huza.huzabackend.dto.ApiResponse;
+import com.huza.huzabackend.dto.RegisterRequest;
+import com.huza.huzabackend.dto.OtpRequest;
+import com.huza.huzabackend.entity.User;
+import com.huza.huzabackend.service.EmailService;
+import com.huza.huzabackend.service.OtpService;
+import com.huza.huzabackend.service.UserService;
+import com.huza.huzabackend.service.VerificationTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

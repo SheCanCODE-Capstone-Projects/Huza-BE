@@ -1,4 +1,4 @@
-package huza.huzabackend.exception;
+package com.huza.huzabackend.exception;
 
 public class TokenExpiredException extends RuntimeException {
     public TokenExpiredException(String message) {

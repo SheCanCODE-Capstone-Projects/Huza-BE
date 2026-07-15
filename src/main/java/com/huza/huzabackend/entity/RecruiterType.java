@@ -1,4 +1,4 @@
-package huza.huzabackend.entity;
+package com.huza.huzabackend.entity;
 
 public enum RecruiterType {
     INDIVIDUAL,

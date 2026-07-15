@@ -1,14 +1,14 @@
-package huza.huzabackend.service;
+package com.huza.huzabackend.service;
 
-import huza.huzabackend.dto.RegisterRequest;
-import huza.huzabackend.entity.*;
-import huza.huzabackend.entity.RecruiterType;
-import huza.huzabackend.entity.Role;
-import huza.huzabackend.entity.User;
-import huza.huzabackend.entity.UserStatus;
-import huza.huzabackend.exception.DuplicateResourceException;
-import huza.huzabackend.exception.ResourceNotFoundException;
-import huza.huzabackend.repository.UserRepository;
+import com.huza.huzabackend.dto.RegisterRequest;
+import com.huza.huzabackend.entity.*;
+import com.huza.huzabackend.entity.RecruiterType;
+import com.huza.huzabackend.entity.Role;
+import com.huza.huzabackend.entity.User;
+import com.huza.huzabackend.entity.UserStatus;
+import com.huza.huzabackend.exception.DuplicateResourceException;
+import com.huza.huzabackend.exception.ResourceNotFoundException;
+import com.huza.huzabackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
