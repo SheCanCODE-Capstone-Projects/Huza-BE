@@ -1,7 +1,6 @@
 package com.huza.huzabackend.service;
 
 import com.huza.huzabackend.dto.RegisterRequest;
-import com.example.auth.entity.*;
 import com.huza.huzabackend.entity.RecruiterType;
 import com.huza.huzabackend.entity.Role;
 import com.huza.huzabackend.entity.User;
