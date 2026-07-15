@@ -1,11 +1,11 @@
-package huza.huzabackend.controller;
+package com.huza.huzabackend.controller;
 
-import huza.huzabackend.dto.ApiResponse;
-import huza.huzabackend.dto.RegisterRequest;
-import huza.huzabackend.entity.Role;
-import huza.huzabackend.entity.User;
-import huza.huzabackend.entity.UserStatus;
-import huza.huzabackend.service.UserService;
+import com.huza.huzabackend.dto.ApiResponse;
+import com.huza.huzabackend.dto.RegisterRequest;
+import com.huza.huzabackend.entity.Role;
+import com.huza.huzabackend.entity.User;
+import com.huza.huzabackend.entity.UserStatus;
+import com.huza.huzabackend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

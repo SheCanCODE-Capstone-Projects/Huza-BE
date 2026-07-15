@@ -1,4 +1,4 @@
-package huza.huzabackend.config;
+package com.huza.huzabackend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

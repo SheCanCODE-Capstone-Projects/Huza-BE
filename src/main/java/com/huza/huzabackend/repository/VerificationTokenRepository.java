@@ -1,6 +1,6 @@
-package huza.huzabackend.repository;
+package com.huza.huzabackend.repository;
 
-import huza.huzabackend.entity.VerificationToken;
+import com.huza.huzabackend.entity.VerificationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

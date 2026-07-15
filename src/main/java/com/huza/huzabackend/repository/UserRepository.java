@@ -1,6 +1,6 @@
-package huza.huzabackend.repository;
+package com.huza.huzabackend.repository;
 
-import huza.huzabackend.entity.User;
+import com.huza.huzabackend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

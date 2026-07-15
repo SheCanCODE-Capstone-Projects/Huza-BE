@@ -1,4 +1,4 @@
-package huza.huzabackend.dto;
+package com.huza.huzabackend.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package huza.huzabackend.service;
+package com.huza.huzabackend.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

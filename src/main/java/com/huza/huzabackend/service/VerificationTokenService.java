@@ -1,10 +1,10 @@
-package huza.huzabackend.service;
+package com.huza.huzabackend.service;
 
-import huza.huzabackend.entity.User;
-import huza.huzabackend.entity.VerificationToken;
-import huza.huzabackend.exception.InvalidTokenException;
-import huza.huzabackend.exception.TokenExpiredException;
-import huza.huzabackend.repository.VerificationTokenRepository;
+import com.huza.huzabackend.entity.User;
+import com.huza.huzabackend.entity.VerificationToken;
+import com.huza.huzabackend.exception.InvalidTokenException;
+import com.huza.huzabackend.exception.TokenExpiredException;
+import com.huza.huzabackend.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

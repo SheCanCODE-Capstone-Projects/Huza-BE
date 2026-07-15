@@ -1,4 +1,4 @@
-package huza.huzabackend.dto;
+package com.huza.huzabackend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
