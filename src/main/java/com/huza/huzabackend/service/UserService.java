@@ -187,6 +187,20 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /**
+     * Reset user password
+     */
+    @Transactional
+    public void resetPassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        log.info("🔑 Password reset successfully for user: {}", email);
+    }
+
     @Transactional
     public User updateUserRole(String userId, Role role) {
         log.info("🎭 Updating role for user ID: {} to {}", userId, role);
