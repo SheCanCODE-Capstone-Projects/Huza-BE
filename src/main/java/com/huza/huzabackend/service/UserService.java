@@ -42,6 +42,9 @@ public class UserService {
     public LoginResponse login(LoginRequest request) {
         log.info("🔑 Attempting authentication for user: {}", request.getEmail());
 
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElse(null);
+
         try {
             // 1. Authenticate with Spring Security
             authenticationManager.authenticate(
@@ -51,17 +54,23 @@ public class UserService {
                     )
             );
         } catch (AuthenticationException e) {
-            log.warn("❌ Authentication failed for user: {}", request.getEmail());
-            userRepository.findByEmail(request.getEmail())
-                    .ifPresent(user -> recordFailedLoginAttempt(user.getId()));
-            throw new InvalidCredentialsException("Invalid email or password");
+            if (user != null && isLegacyPasswordMatch(user, request.getPassword())) {
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                userRepository.save(user);
+            } else {
+                log.warn("❌ Authentication failed for user: {}", request.getEmail());
+                if (user != null) {
+                    recordFailedLoginAttempt(user.getId());
+                }
+                throw new InvalidCredentialsException("Invalid email or password");
+            }
         }
 
-        // 2. Fetch authenticated user
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found after authentication"));
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found after authentication");
+        }
 
-        // 3. Verify Account Eligibility
+        // 2. Verify Account Eligibility
         if (user.getStatus() == UserStatus.BANNED) {
             throw new AccountBannedException("Your account has been banned. Please contact support.");
         }
@@ -69,10 +78,10 @@ public class UserService {
             throw new AccountNotVerifiedException("Please verify your email address before logging in.");
         }
 
-        // 4. Update login status and audit metrics
+        // 3. Update login status and audit metrics
         updateLastLogin(user.getId());
 
-        // 5. Generate token and return details
+        // 4. Generate token and return details
         String jwtToken = jwtService.generateToken(user);
 
         log.info("✅ User authenticated successfully: {}", user.getEmail());
@@ -82,6 +91,15 @@ public class UserService {
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
                 .build();
+    }
+
+    private boolean isLegacyPasswordMatch(User user, String rawPassword) {
+        if (user.getPassword() == null || rawPassword == null) {
+            return false;
+        }
+
+        return passwordEncoder.matches(rawPassword, user.getPassword())
+                || rawPassword.equals(user.getPassword());
     }
 
     // ===== REGISTRATION =====
