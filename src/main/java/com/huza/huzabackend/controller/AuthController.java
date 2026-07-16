@@ -1,6 +1,7 @@
 package com.huza.huzabackend.controller;
 
 import com.huza.huzabackend.dto.ApiResponse;
+import com.huza.huzabackend.dto.ForgotPasswordRequest;
 import com.huza.huzabackend.dto.RegisterRequest;
 import com.huza.huzabackend.dto.OtpRequest;
 import com.huza.huzabackend.entity.User;
@@ -8,6 +9,7 @@ import com.huza.huzabackend.service.EmailService;
 import com.huza.huzabackend.service.OtpService;
 import com.huza.huzabackend.service.UserService;
 import com.huza.huzabackend.service.VerificationTokenService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,32 @@ public class AuthController {
             log.error("❌ Registration failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Registration failed: " + e.getMessage()));
+        }
+    }
+
+    //Forgot Password
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+
+        log.info("🔑 Password reset requested for email: {}", request.getEmail());
+
+        try {
+            // 1. Generate OTP and get the value
+            String otp = otpService.generateAndSendOtpForPasswordReset(request.getEmail());
+
+            // 2. Send OTP via email
+            emailService.sendPasswordResetOtp(request.getEmail(), otp);
+
+            return ResponseEntity.ok(ApiResponse.success(
+                    "OTP sent to your email. Please check your inbox.",
+                    "OTP sent to: " + request.getEmail()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ Forgot password failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to send OTP: " + e.getMessage()));
         }
     }
 

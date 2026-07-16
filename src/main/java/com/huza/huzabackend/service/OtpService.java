@@ -1,9 +1,11 @@
 package com.huza.huzabackend.service;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
+import com.huza.huzabackend.service.UserService;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -12,12 +14,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @Slf4j
 public class OtpService {
+    private final UserService userService;
 
     private final Map<String, OtpData> otpStorage = new ConcurrentHashMap<>();
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int OTP_LENGTH = 6;
     private static final int OTP_EXPIRY_MINUTES = 10;
+
+    public OtpService(UserService userService) {
+        this.userService = userService;
+    }
 
     public String generateOtp(String email) {
         // Generate 6-digit OTP
@@ -59,6 +66,24 @@ public class OtpService {
     public void invalidateOtp(String email) {
         otpStorage.remove(email);
         log.info("🗑️ OTP invalidated for email: {}", email);
+    }
+
+    /**
+     * Generate OTP for password reset
+     */
+    public String generateAndSendOtpForPasswordReset(String email) {
+        // 1. Check if user exists
+        if (!userService.existsByEmail(email)) {
+            log.warn("⚠️ Password reset attempted for non-existent email: {}", email);
+            throw new RuntimeException("User not found with email: " + email);
+        }
+
+        // 2. Generate OTP
+        String otp = generateOtp(email);
+        log.info("🔑 Password reset OTP generated for {}: {}", email, otp);
+
+        // 3. Return the OTP so controller can send it
+        return otp;
     }
 
     private static class OtpData {
