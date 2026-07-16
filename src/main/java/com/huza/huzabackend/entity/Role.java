@@ -2,7 +2,7 @@ package com.huza.huzabackend.entity;
 
 public enum Role {
     ADMIN,
-    ARTIST,
+        ARTIST,
     RECRUITER,
     EVENT_ORGANIZER,
     MODERATOR,

@@ -26,6 +26,15 @@ public class AuthController {
     private final EmailService emailService;
     private final OtpService otpService;
 
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+        log.info("🔑 Login request for email: {}", request.getEmail());
+        // Exceptions (InvalidCredentialsException, AccountNotVerifiedException,
+        // AccountBannedException) bubble up and are handled by GlobalExceptionHandler
+        LoginResponse response = userService.login(request);
+        return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterRequest request) {
         log.info("📝 Registration request for email: {}", request.getEmail());
