@@ -8,6 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 public class HuzaApplication {
 
     public static void main(String[] args) {
+
         SpringApplication.run(HuzaApplication.class, args);
     }
 
