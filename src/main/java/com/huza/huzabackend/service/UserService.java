@@ -1,15 +1,23 @@
 package com.huza.huzabackend.service;
 
+import com.huza.huzabackend.dto.LoginRequest; // Ensure you have this DTO
+import com.huza.huzabackend.dto.LoginResponse; // Ensure you have this DTO
 import com.huza.huzabackend.dto.RegisterRequest;
 import com.huza.huzabackend.entity.RecruiterType;
 import com.huza.huzabackend.entity.Role;
 import com.huza.huzabackend.entity.User;
 import com.huza.huzabackend.entity.UserStatus;
+import com.huza.huzabackend.exception.AccountBannedException;
+import com.huza.huzabackend.exception.AccountNotVerifiedException;
 import com.huza.huzabackend.exception.DuplicateResourceException;
+import com.huza.huzabackend.exception.InvalidCredentialsException;
 import com.huza.huzabackend.exception.ResourceNotFoundException;
 import com.huza.huzabackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +33,56 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService; // Used to generate the authentication token
+
+    // ===== AUTHENTICATION / LOGIN =====
+
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
+        log.info("🔑 Attempting authentication for user: {}", request.getEmail());
+
+        try {
+            // 1. Authenticate with Spring Security
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (AuthenticationException e) {
+            log.warn("❌ Authentication failed for user: {}", request.getEmail());
+            userRepository.findByEmail(request.getEmail())
+                    .ifPresent(user -> recordFailedLoginAttempt(user.getId()));
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        // 2. Fetch authenticated user
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found after authentication"));
+
+        // 3. Verify Account Eligibility
+        if (user.getStatus() == UserStatus.BANNED) {
+            throw new AccountBannedException("Your account has been banned. Please contact support.");
+        }
+        if (!user.isVerified() && user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+            throw new AccountNotVerifiedException("Please verify your email address before logging in.");
+        }
+
+        // 4. Update login status and audit metrics
+        updateLastLogin(user.getId());
+
+        // 5. Generate token and return details
+        String jwtToken = jwtService.generateToken(user);
+
+        log.info("✅ User authenticated successfully: {}", user.getEmail());
+        return LoginResponse.builder()
+                .token(jwtToken)
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .build();
+    }
 
     // ===== REGISTRATION =====
 
