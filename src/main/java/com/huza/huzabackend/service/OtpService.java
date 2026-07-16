@@ -85,6 +85,71 @@ public class OtpService {
         // 3. Return the OTP so controller can send it
         return otp;
     }
+    /**
+     * Verify OTP for password reset
+     * This only verifies the OTP without any side effects
+     */
+    public boolean verifyOtpForPasswordReset(String email, String otp) {
+        OtpData otpData = otpStorage.get(email);
+
+        if (otpData == null) {
+            log.warn("⚠️ No OTP found for email: {}", email);
+            return false;
+        }
+
+        if (otpData.isExpired()) {
+            log.warn("⚠️ OTP expired for email: {}", email);
+            otpStorage.remove(email);
+            return false;
+        }
+
+        if (!otpData.getOtp().equals(otp)) {
+            log.warn("⚠️ Invalid OTP for email: {}", email);
+            return false;
+        }
+
+        log.info("✅ OTP verified successfully for password reset: {}", email);
+        // Note: We do NOT remove the OTP here!
+        // It will be removed after successful password reset
+        return true;
+    }
+// ========================================
+// FORGOT PASSWORD / RESET PASSWORD METHODS
+// ========================================
+
+    /**
+     * Validate OTP for password reset (without removing it)
+     */
+    public void validateOtpForReset(String email, String otp) {
+        OtpData otpData = otpStorage.get(email);
+
+        if (otpData == null) {
+            log.warn("⚠️ No OTP found for email: {}", email);
+            throw new RuntimeException("Invalid or expired OTP. Please request a new one.");
+        }
+
+        if (otpData.isExpired()) {
+            log.warn("⚠️ OTP expired for email: {}", email);
+            otpStorage.remove(email);
+            throw new RuntimeException("OTP has expired. Please request a new one.");
+        }
+
+        if (!otpData.getOtp().equals(otp)) {
+            log.warn("⚠️ Invalid OTP for email: {}", email);
+            throw new RuntimeException("Invalid OTP. Please check and try again.");
+        }
+
+        log.info("✅ OTP validated for password reset: {}", email);
+        // Note: OTP is NOT removed here to prevent reuse
+    }
+
+    /**
+     * Invalidate OTP after successful password reset
+     */
+    public void invalidateOtpAfterReset(String email) {
+        otpStorage.remove(email);
+        log.info("🗑️ OTP invalidated after password reset for: {}", email);
+    }
 
     private static class OtpData {
         private final String otp;

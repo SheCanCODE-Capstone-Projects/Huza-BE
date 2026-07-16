@@ -1,15 +1,13 @@
 package com.huza.huzabackend.controller;
 
-import com.huza.huzabackend.dto.ApiResponse;
-import com.huza.huzabackend.dto.ForgotPasswordRequest;
-import com.huza.huzabackend.dto.RegisterRequest;
-import com.huza.huzabackend.dto.OtpRequest;
+import com.huza.huzabackend.dto.*;
 import com.huza.huzabackend.entity.User;
 import com.huza.huzabackend.service.EmailService;
 import com.huza.huzabackend.service.OtpService;
 import com.huza.huzabackend.service.UserService;
 import com.huza.huzabackend.service.VerificationTokenService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -139,6 +137,82 @@ public class AuthController {
             log.error(" Failed to resend OTP: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Failed to resend OTP: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/verify-otp-reset")
+    @Operation(
+            summary = "Verify OTP for password reset",
+            description = "Verifies the OTP for password reset (does NOT mark user as verified)"
+    )
+    public ResponseEntity<ApiResponse<String>> verifyOtpForReset(
+            @Valid @RequestBody VerifyOtpForResetRequest request) {
+
+        log.info("🔐 Verifying OTP for password reset: {}", request.getEmail());
+
+        try {
+            // Verify OTP (without marking user as verified)
+            boolean isValid = otpService.verifyOtpForPasswordReset(
+                    request.getEmail(),
+                    request.getOtp()
+            );
+
+            if (!isValid) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Invalid or expired OTP. Please try again."));
+            }
+
+            return ResponseEntity.ok(ApiResponse.success(
+                    "OTP verified successfully. You can now reset your password.",
+                    "OTP verified for: " + request.getEmail()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ OTP verification failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Verification failed: " + e.getMessage()));
+        }
+    }
+
+
+    @PostMapping("/reset-password")
+    @Operation(
+            summary = "Reset password",
+            description = "Resets the user's password with new password and confirm password"
+    )
+    public ResponseEntity<ApiResponse<String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        log.info("🔑 Password reset requested");
+
+        try {
+            // 1. Check if passwords match
+            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+                log.warn("⚠️ Passwords do not match");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Passwords do not match. Please make sure both passwords are identical."));
+            }
+
+            // 2. Validate OTP
+            otpService.validateOtpForReset(request.getEmail(), request.getOtp());
+
+            // 3. Reset password
+            userService.resetPassword(request.getEmail(), request.getNewPassword());
+
+            // 4. Invalidate OTP after successful reset
+            otpService.invalidateOtpAfterReset(request.getEmail());
+
+            log.info("✅ Password reset successfully for email: {}", request.getEmail());
+
+            return ResponseEntity.ok(ApiResponse.success(
+                    "Password reset successfully! You can now login with your new password.",
+                    "Password reset for: " + request.getEmail()
+            ));
+
+        } catch (RuntimeException e) {
+            log.error("❌ Password reset failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Password reset failed: " + e.getMessage()));
         }
     }
 }
