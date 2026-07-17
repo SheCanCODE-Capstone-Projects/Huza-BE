@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -19,15 +20,18 @@ import java.util.List;
 public class SecurityConfig {
 
     private final AuthenticationProvider authenticationProvider;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter; // Ensure this import matches your filter's package
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthenticationSuccessHandler authenticationSuccessHandler;
 
     // Constructor injection for your authentication components
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            AuthenticationProvider authenticationProvider
+            AuthenticationProvider authenticationProvider,
+            AuthenticationSuccessHandler authenticationSuccessHandler
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.authenticationProvider = authenticationProvider;
+        this.authenticationSuccessHandler = authenticationSuccessHandler;
     }
 
     @Bean
@@ -40,20 +44,22 @@ public class SecurityConfig {
 
                 // 2. Session state management
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 // 3. Merged authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/api/auth/**").permitAll()
+                        .requestMatchers("/auth/**", "/api/auth/**", "/login", "/oauth2/**", "/login/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").authenticated()
-
-                        // NOTE: If your team still needs everything else wide open during dev,
-                        // change '.authenticated()' to '.permitAll()' below.
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .redirectionEndpoint(redirection -> redirection.baseUri("/login/code/*"))
+                        .successHandler(authenticationSuccessHandler)
+                        .failureUrl("/swagger-ui.html")
                 )
 
                 // 4. Your custom authentication & JWT filters
