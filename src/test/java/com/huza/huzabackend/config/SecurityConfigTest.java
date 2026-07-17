@@ -8,6 +8,8 @@ import com.huza.huzabackend.service.EmailService;
 import com.huza.huzabackend.service.OtpService;
 import com.huza.huzabackend.service.UserService;
 import com.huza.huzabackend.service.VerificationTokenService;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -25,11 +28,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = AuthController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, SwaggerConfig.class})
 class SecurityConfigTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private OpenAPI openAPI;
 
     @MockBean
     private UserService userService;
@@ -51,6 +57,14 @@ class SecurityConfigTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Test
+    void swaggerShouldExposeGoogleOAuth2SecurityScheme() {
+        SecurityScheme securityScheme = openAPI.getComponents().getSecuritySchemes().get("google_oauth2");
+
+        assertThat(securityScheme).isNotNull();
+        assertThat(securityScheme.getType()).isEqualTo(SecurityScheme.Type.OAUTH2);
+    }
 
     @Test
     void registerEndpointShouldBeAccessibleWithoutAuthentication() throws Exception {
