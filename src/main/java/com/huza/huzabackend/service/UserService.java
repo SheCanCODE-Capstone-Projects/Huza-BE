@@ -1,16 +1,23 @@
 package com.huza.huzabackend.service;
 
+import com.huza.huzabackend.dto.LoginRequest; // Ensure you have this DTO
+import com.huza.huzabackend.dto.LoginResponse; // Ensure you have this DTO
 import com.huza.huzabackend.dto.RegisterRequest;
-import com.huza.huzabackend.entity.*;
 import com.huza.huzabackend.entity.RecruiterType;
 import com.huza.huzabackend.entity.Role;
 import com.huza.huzabackend.entity.User;
 import com.huza.huzabackend.entity.UserStatus;
+import com.huza.huzabackend.exception.AccountBannedException;
+import com.huza.huzabackend.exception.AccountNotVerifiedException;
 import com.huza.huzabackend.exception.DuplicateResourceException;
+import com.huza.huzabackend.exception.InvalidCredentialsException;
 import com.huza.huzabackend.exception.ResourceNotFoundException;
 import com.huza.huzabackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +33,74 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService; // Used to generate the authentication token
+
+    // ===== AUTHENTICATION / LOGIN =====
+
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
+        log.info("🔑 Attempting authentication for user: {}", request.getEmail());
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElse(null);
+
+        try {
+            // 1. Authenticate with Spring Security
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (AuthenticationException e) {
+            if (user != null && isLegacyPasswordMatch(user, request.getPassword())) {
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                userRepository.save(user);
+            } else {
+                log.warn("❌ Authentication failed for user: {}", request.getEmail());
+                if (user != null) {
+                    recordFailedLoginAttempt(user.getId());
+                }
+                throw new InvalidCredentialsException("Invalid email or password");
+            }
+        }
+
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found after authentication");
+        }
+
+        // 2. Verify Account Eligibility
+        if (user.getStatus() == UserStatus.BANNED) {
+            throw new AccountBannedException("Your account has been banned. Please contact support.");
+        }
+        if (!user.isVerified() && user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+            throw new AccountNotVerifiedException("Please verify your email address before logging in.");
+        }
+
+        // 3. Update login status and audit metrics
+        updateLastLogin(user.getId());
+
+        // 4. Generate token and return details
+        String jwtToken = jwtService.generateToken(user);
+
+        log.info("✅ User authenticated successfully: {}", user.getEmail());
+        return LoginResponse.builder()
+                .token(jwtToken)
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .build();
+    }
+
+    private boolean isLegacyPasswordMatch(User user, String rawPassword) {
+        if (user.getPassword() == null || rawPassword == null) {
+            return false;
+        }
+
+        return passwordEncoder.matches(rawPassword, user.getPassword())
+                || rawPassword.equals(user.getPassword());
+    }
 
     // ===== REGISTRATION =====
 
@@ -186,6 +261,20 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    /**
+     * Reset user password
+     */
+    @Transactional
+    public void resetPassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        log.info("🔑 Password reset successfully for user: {}", email);
     }
 
     @Transactional

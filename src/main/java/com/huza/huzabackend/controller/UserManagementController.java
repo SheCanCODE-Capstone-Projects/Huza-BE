@@ -6,6 +6,7 @@ import com.huza.huzabackend.entity.Role;
 import com.huza.huzabackend.entity.User;
 import com.huza.huzabackend.entity.UserStatus;
 import com.huza.huzabackend.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "User Management", description = "User profile, status, role, and account management endpoints")
 public class UserManagementController {
 
     private final UserService userService;
