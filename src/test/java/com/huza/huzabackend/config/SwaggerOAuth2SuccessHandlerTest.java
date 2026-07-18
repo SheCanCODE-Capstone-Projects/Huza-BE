@@ -1,15 +1,14 @@
 package com.huza.huzabackend.config;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.web.RedirectStrategy;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 class SwaggerOAuth2SuccessHandlerTest {
 
@@ -22,6 +21,7 @@ class SwaggerOAuth2SuccessHandlerTest {
 
         handler.onAuthenticationSuccess(request, response, authentication);
 
-        assertEquals("/swagger-ui/index.html", response.getRedirectedUrl());
+        String redirectedUrl = ((MockHttpServletResponse) response).getRedirectedUrl();
+        assertEquals("/swagger-ui/index.html", redirectedUrl);
     }
 }

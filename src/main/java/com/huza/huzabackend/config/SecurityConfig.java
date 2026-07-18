@@ -37,23 +37,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Team settings: Disable standard session/login features
+                // 1. Explicitly enable CORS configuration handling
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // 2. Team settings: Disable standard session/login features
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
 
-                // 2. Session state management
+                // 3. Session state management
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
-                // 3. Merged authorization rules
+                // 4. Merged authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**", "/api/auth/**", "/login", "/oauth2/**", "/login/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").authenticated()
+
+                        // ADD THIS LINE HERE to let your new endpoints bypass security for public viewing/testing:
+                        .requestMatchers("/api/artist/profile/**").permitAll()
+                        .requestMatchers("/api/artist/skills/**").permitAll()
+                        .requestMatchers("/api/skills/**").permitAll()
+                                .requestMatchers("/api/skills/**").permitAll()
+                                .requestMatchers("/api/users/**").permitAll()
+                                .requestMatchers("/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -62,7 +72,7 @@ public class SecurityConfig {
                         .failureUrl("/swagger-ui.html")
                 )
 
-                // 4. Your custom authentication & JWT filters
+                // 5. Your custom authentication & JWT filters
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
