@@ -13,6 +13,7 @@ import com.huza.huzabackend.dto.ArtistProfileResponseDTO;
 import com.huza.huzabackend.dto.ArtistProfileUpdateRequest;
 import com.huza.huzabackend.entity.ArtistProfile;
 import com.huza.huzabackend.entity.User;
+import com.huza.huzabackend.entity.Role;
 import com.huza.huzabackend.repository.ArtistProfileRepository;
 import com.huza.huzabackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,15 +28,22 @@ public class ArtistProfileService {
     private final ArtistProfileRepository artistProfileRepository;
     private final ArtistProfileMapper artistProfileMapper;
     private static final long MAX_PICTURE_SIZE = 5 * 1024 * 1024;
-    private String uploadDir = "uploads/profile-pictures";
+
+    // ---- NEW: single place that enforces "this user must be an ARTIST" ----
+    private User requireArtist(String artistId) {
+        String cleanedId = artistId.trim();
+        User user = userRepository.findById(cleanedId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + cleanedId));
+
+        if (user.getRole() != Role.ARTIST) {
+            throw new RuntimeException("Artist profile not found for user ID: " + cleanedId);
+        }
+        return user;
+    }
 
     @Transactional(readOnly = true)
     public ArtistProfileResponseDTO getArtistProfile(String artistId) {
-        // Trim the space but keep it as a String type to match UserRepository
-        String cleanedId = artistId.trim();
-
-        User user = userRepository.findById(cleanedId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + cleanedId));
+        User user = requireArtist(artistId);
 
         ArtistProfile profile = user.getArtistProfile();
         if (profile == null) {
@@ -47,11 +55,7 @@ public class ArtistProfileService {
 
     @Transactional
     public ArtistProfileResponseDTO updateArtistProfile(String artistId, ArtistProfileUpdateRequest request) {
-        // Trim the space but keep it as a String type to match UserRepository
-        String cleanedId = artistId.trim();
-
-        User user = userRepository.findById(cleanedId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + cleanedId));
+        User user = requireArtist(artistId);
 
         ArtistProfile profile = user.getArtistProfile();
         if (profile == null) {
@@ -67,12 +71,9 @@ public class ArtistProfileService {
         return artistProfileMapper.toResponseDto(user, savedProfile);
     }
 
-
-
     @Transactional
     public ArtistProfileResponseDTO uploadProfilePicture(String artistId, MultipartFile file) {
-        User user = userRepository.findById(artistId.trim())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + artistId));
+        User user = requireArtist(artistId);
 
         if (file.isEmpty()) {
             throw new RuntimeException("Cannot upload an empty file");
@@ -104,8 +105,7 @@ public class ArtistProfileService {
 
     @Transactional
     public ArtistProfileResponseDTO deleteProfilePicture(String artistId) {
-        User user = userRepository.findById(artistId.trim())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + artistId));
+        User user = requireArtist(artistId);
 
         user.setProfilePictureData(null);
         user.setProfilePictureContentType(null);
@@ -121,8 +121,7 @@ public class ArtistProfileService {
 
     @Transactional(readOnly = true)
     public byte[] getProfilePictureBytes(String artistId) {
-        User user = userRepository.findById(artistId.trim())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + artistId));
+        User user = requireArtist(artistId);
 
         if (user.getProfilePictureData() == null) {
             throw new RuntimeException("No profile picture found for user: " + artistId);
@@ -132,8 +131,7 @@ public class ArtistProfileService {
 
     @Transactional(readOnly = true)
     public String getProfilePictureContentType(String artistId) {
-        User user = userRepository.findById(artistId.trim())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + artistId));
+        User user = requireArtist(artistId);
         return user.getProfilePictureContentType();
     }
 }
