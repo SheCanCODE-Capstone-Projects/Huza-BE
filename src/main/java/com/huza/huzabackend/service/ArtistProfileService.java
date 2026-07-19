@@ -1,19 +1,14 @@
 package com.huza.huzabackend.service;
 
-import lombok.Value;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import com.huza.huzabackend.Mapper.ArtistProfileMapper;
 import com.huza.huzabackend.dto.ArtistProfileResponseDTO;
 import com.huza.huzabackend.dto.ArtistProfileUpdateRequest;
 import com.huza.huzabackend.entity.ArtistProfile;
-import com.huza.huzabackend.entity.User;
 import com.huza.huzabackend.entity.Role;
+import com.huza.huzabackend.entity.User;
+import com.huza.huzabackend.exception.ResourceNotFoundException;
 import com.huza.huzabackend.repository.ArtistProfileRepository;
 import com.huza.huzabackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +24,14 @@ public class ArtistProfileService {
     private final ArtistProfileMapper artistProfileMapper;
     private static final long MAX_PICTURE_SIZE = 5 * 1024 * 1024;
 
-    // ---- NEW: single place that enforces "this user must be an ARTIST" ----
+    // NEW: single guarded lookup used by every method below
     private User requireArtist(String artistId) {
         String cleanedId = artistId.trim();
         User user = userRepository.findById(cleanedId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + cleanedId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + cleanedId));
 
         if (user.getRole() != Role.ARTIST) {
-            throw new RuntimeException("Artist profile not found for user ID: " + cleanedId);
+            throw new ResourceNotFoundException("Artist profile not found for user ID: " + cleanedId);
         }
         return user;
     }
@@ -106,6 +101,11 @@ public class ArtistProfileService {
     @Transactional
     public ArtistProfileResponseDTO deleteProfilePicture(String artistId) {
         User user = requireArtist(artistId);
+
+        // NEW: fix #2, see below
+        if (user.getProfilePictureData() == null) {
+            throw new ResourceNotFoundException("No profile picture found to delete for user: " + artistId);
+        }
 
         user.setProfilePictureData(null);
         user.setProfilePictureContentType(null);
