@@ -3,7 +3,6 @@ package com.huza.huzabackend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 @Entity
 @Table(name = "skills")
 @Getter
@@ -18,4 +17,9 @@ public class Skill {
 
     @Column(nullable = false, unique = true)
     private String name;
+
+    // NEW — same Category table Job uses, so job categories and skill categories line up
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 }
