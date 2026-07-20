@@ -12,8 +12,11 @@ public class RecruiterProfileResponse {
     private String phoneNumber;
     private String bio;
     private String location;
-    private String jobTitle;
     private String recruiterType;
+    private String jobTitle;
 
-    // private CompanyInfo company; // Commented out for now
+    // Add these fields to match the MapStruct target configuration
+    private String profilePicture;
+    private String profilePictureContentType;
+    private byte[] profilePictureData;
 }

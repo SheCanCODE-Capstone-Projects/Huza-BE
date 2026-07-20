@@ -60,7 +60,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/artist/profile/**").permitAll()
                         .requestMatchers("/api/artist/skills/**").permitAll()
                         .requestMatchers("/api/skills/**").permitAll()
-                                .requestMatchers("/api/skills/**").permitAll()
+                                .requestMatchers("/api/**").permitAll()
                                 .requestMatchers("/api/users/**").permitAll()
                                 .requestMatchers("/api/recruiter/profile/**").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")

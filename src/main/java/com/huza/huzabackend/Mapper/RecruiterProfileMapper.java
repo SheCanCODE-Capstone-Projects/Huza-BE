@@ -2,34 +2,23 @@ package com.huza.huzabackend.Mapper;
 
 import com.huza.huzabackend.dto.RecruiterProfileResponse;
 import com.huza.huzabackend.entity.RecruiterProfile;
-import com.huza.huzabackend.entity.User;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Component
-public class RecruiterProfileMapper {
+@Mapper(componentModel = "spring")
+public interface RecruiterProfileMapper {
 
-    public RecruiterProfileResponse toResponse(RecruiterProfile profile) {
-        if (profile == null) return null;
-
-        RecruiterProfileResponse response = new RecruiterProfileResponse();
-        response.setRecruiterId(profile.getRecruiterId());
-        response.setJobTitle(profile.getJobTitle());
-
-        User user = profile.getUser();
-        if (user != null) {
-            response.setUserId(user.getId());
-            response.setFullName(user.getFullName());
-            response.setEmail(user.getEmail());
-            response.setUsername(user.getUsername());
-            response.setPhoneNumber(user.getPhoneNumber());
-            response.setBio(user.getBio());
-            response.setLocation(user.getLocation());
-            if (user.getRecruiterType() != null) {
-                response.setRecruiterType(user.getRecruiterType().name());
-            }
-        }
-
-        // Company mapping removed temporary until Company entity is added to the project
-        return response;
-    }
+    @Mapping(source = "recruiterId", target = "recruiterId")
+    @Mapping(source = "jobTitle", target = "jobTitle")
+    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "user.fullName", target = "fullName")
+    @Mapping(source = "user.email", target = "email")
+    @Mapping(source = "user.username", target = "username")
+    @Mapping(source = "user.phoneNumber", target = "phoneNumber")
+    @Mapping(source = "user.bio", target = "bio")
+    @Mapping(source = "user.location", target = "location")
+    @Mapping(source = "user.recruiterType", target = "recruiterType")
+    // Only map the filename string since the DTO doesn't have the byte[] fields
+    @Mapping(source = "user.profilePicture", target = "profilePicture")
+    RecruiterProfileResponse toResponse(RecruiterProfile profile);
 }
