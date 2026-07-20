@@ -6,39 +6,42 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "companies")
+@Table(name = "calendars", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"artist_id", "date"})
+})
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Company {
+public class Calendar {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false, unique = true)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "artist_id", nullable = false)
+    private User artist;
 
-    @Column(length = 1000)
-    private String description;
+    @Column(nullable = false)
+    private LocalDate date;
 
-    @Column(name = "website_url")
-    private String websiteUrl;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AvailabilityStatus status;
 
-    @Column(name = "logo_url")
-    private String logoUrl;
+    @Column(length = 500)
+    private String notes;
 
-    private String location;
+    @Column(name = "start_time")
+    private String startTime; // e.g., "09:00"
 
-    @Column(name = "industry")
-    private String industry;
-
-    @Column(name = "company_size")
-    private String companySize;
+    @Column(name = "end_time")
+    private String endTime; // e.g., "17:00"
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

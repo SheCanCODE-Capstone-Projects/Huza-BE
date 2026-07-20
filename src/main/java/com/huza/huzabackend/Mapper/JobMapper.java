@@ -9,11 +9,11 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface JobMapper {
 
-    @Mapping(source = "recruiter.user.id", target = "recruiterUserId")
-    @Mapping(source = "recruiter.user.fullName", target = "recruiterName")
-    @Mapping(source = "company.companyId", target = "companyId")
+    @Mapping(source = "postedBy", target = "recruiterUserId")
+    @Mapping(target = "recruiterName", ignore = true)
+    @Mapping(source = "company.id", target = "companyId")
     @Mapping(source = "company.name", target = "companyName")
-    @Mapping(source = "category.categoryId", target = "categoryId")
-    @Mapping(source = "category.categoryName", target = "categoryName")
+    @Mapping(source = "category.id", target = "categoryId")
+    @Mapping(source = "category.name", target = "categoryName")
     JobResponse toResponse(Job job);
 }

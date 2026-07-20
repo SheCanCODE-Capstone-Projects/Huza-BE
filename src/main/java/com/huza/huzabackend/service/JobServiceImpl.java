@@ -42,14 +42,14 @@ public class JobServiceImpl implements JobService {
                 .description(request.getDescription())
                 .location(request.getLocation())
                 .salary(request.getSalary())
-                .contractType(parseEnum(Job.ContractType.class, request.getContractType()))
-                .experienceLevel(parseEnum(Job.ExperienceLevel.class, request.getExperienceLevel()))
+                .contractType(parseEnum(ContractType.class, request.getContractType()))
+                .experienceLevel(parseEnum(ExperienceLevel.class, request.getExperienceLevel()))
                 .deadline(request.getDeadline())
-                .status(Job.JobStatus.OPEN)
+                .status(JobStatus.OPEN)
                 .build();
 
         if (request.getCompanyId() != null) {
-            Company company = companyRepository.findById(request.getCompanyId())
+            Company company = companyRepository.findById(String.valueOf(request.getCompanyId()))
                     .orElseThrow(() -> new ResourceNotFoundException("Company not found: " + request.getCompanyId()));
             job.setCompany(company);
         }

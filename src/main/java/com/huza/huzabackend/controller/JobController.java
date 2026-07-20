@@ -1,57 +1,59 @@
 package com.huza.huzabackend.controller;
 
-import com.huza.huzabackend.dto.CreateJobRequest;
-import com.huza.huzabackend.dto.JobResponse;
-import com.huza.huzabackend.dto.UpdateJobRequest;
-import com.huza.huzabackend.service.JobService;
-import jakarta.validation.Valid;
+import com.huza.huzabackend.dto.ApiResponse;
+import com.huza.huzabackend.dto.JobSearchRequest;
+import com.huza.huzabackend.entity.Job;
+import com.huza.huzabackend.service.JobSearchService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recruiter/jobs")
+@RequestMapping("/api/artist/jobs")
 @RequiredArgsConstructor
+@Tag(name = "Job Search", description = "Job search and filtering endpoints for artists")
 public class JobController {
 
-    private final JobService jobService;
+    private final JobSearchService jobSearchService;
 
-    @PostMapping
-    public ResponseEntity<JobResponse> createJob(@Valid @RequestBody CreateJobRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(jobService.createJob(request));
-    }
-
-    @PutMapping("/{jobId}")
-    public ResponseEntity<JobResponse> updateJob(@PathVariable Long jobId, @Valid @RequestBody UpdateJobRequest request) {
-        return ResponseEntity.ok(jobService.updateJob(jobId, request));
-    }
-
-    @DeleteMapping("/{jobId}")
-    public ResponseEntity<Void> deleteJob(@PathVariable Long jobId) {
-        jobService.deleteJob(jobId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/{jobId}/close")
-    public ResponseEntity<JobResponse> closeJob(@PathVariable Long jobId) {
-        return ResponseEntity.ok(jobService.closeJob(jobId));
-    }
-
-    @GetMapping("/{jobId}")
-    public ResponseEntity<JobResponse> getJob(@PathVariable Long jobId) {
-        return ResponseEntity.ok(jobService.getJob(jobId));
-    }
-
-    @GetMapping("/recruiter/{recruiterUserId}")
-    public ResponseEntity<List<JobResponse>> getJobsByRecruiter(@PathVariable String recruiterUserId) {
-        return ResponseEntity.ok(jobService.getJobsByRecruiter(recruiterUserId));
-    }
+    @Operation(summary = "Search and filter jobs", description = "Search for jobs with optional filters: category, location, salary, experience level, and contract type")
     @GetMapping
-    public ResponseEntity<List<JobResponse>> getAllJobs(
-            @RequestParam(value = "status", required = false) String status) {
-        return ResponseEntity.ok(jobService.getAllJobs(status));
+    public ResponseEntity<ApiResponse<List<Job>>> searchJobs(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) java.math.BigDecimal salary,
+            @RequestParam(required = false) com.huza.huzabackend.entity.ExperienceLevel experienceLevel,
+            @RequestParam(required = false) com.huza.huzabackend.entity.ContractType contractType) {
+
+        JobSearchRequest searchRequest = new JobSearchRequest();
+        searchRequest.setCategory(category);
+        searchRequest.setLocation(location);
+        searchRequest.setSalary(salary);
+        searchRequest.setExperienceLevel(experienceLevel);
+        searchRequest.setContractType(contractType);
+
+        List<Job> jobs = jobSearchService.searchJobs(searchRequest);
+
+        return ResponseEntity.ok(ApiResponse.<List<Job>>builder()
+                .success(true)
+                .message("Jobs retrieved successfully")
+                .data(jobs)
+                .build());
+    }
+
+    @Operation(summary = "Get job details", description = "Get detailed information about a specific job")
+    @GetMapping("/{jobId}")
+    public ResponseEntity<ApiResponse<Job>> getJobById(@PathVariable String jobId) {
+        Job job = jobSearchService.getJobById(jobId);
+
+        return ResponseEntity.ok(ApiResponse.<Job>builder()
+                .success(true)
+                .message("Job details retrieved successfully")
+                .data(job)
+                .build());
     }
 }

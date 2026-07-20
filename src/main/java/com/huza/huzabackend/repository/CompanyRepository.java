@@ -2,10 +2,9 @@ package com.huza.huzabackend.repository;
 
 import com.huza.huzabackend.entity.Company;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
-public interface CompanyRepository extends JpaRepository<Company, Long> {
-    Optional<Company> findByTinNumber(String tinNumber);
-    boolean existsByTinNumber(String tinNumber);
+@Repository
+public interface CompanyRepository extends JpaRepository<Company, String> {
+    // Read-only for artist side
 }

@@ -3,65 +3,69 @@ package com.huza.huzabackend.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "jobs")
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Job {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "job_id")
-    private Long jobId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recruiter_id", nullable = false)
-    private RecruiterProfile recruiter;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
-    private Company company; // nullable — independent recruiters may not attach a company
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 2000, nullable = false)
     private String description;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
+
+    @Column(nullable = false)
     private String location;
 
-    private BigDecimal salary;
+    @Column(name = "salary_min")
+    private BigDecimal salaryMin;
+
+    @Column(name = "salary_max")
+    private BigDecimal salaryMax;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "contract_type")
-    private ContractType contractType;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "experience_level")
+    @Column(name = "experience_level", nullable = false)
     private ExperienceLevel experienceLevel;
 
-    private LocalDate deadline;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "contract_type", nullable = false)
+    private ContractType contractType;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
+
+    @Column(name = "posted_by")
+    private String postedBy; // User ID of recruiter who posted
 
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private JobStatus status = JobStatus.OPEN;
+    @Column(name = "status", nullable = false)
+    private JobStatus status;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "application_deadline")
+    private LocalDateTime applicationDeadline;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
@@ -69,24 +73,16 @@ public class Job {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        isActive = true;
+        if (status == null) {
+            status = JobStatus.OPEN;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public enum ContractType {
-        FULL_TIME, PART_TIME, CONTRACT, FREELANCE, INTERNSHIP
-    }
-
-    public enum ExperienceLevel {
-        ENTRY, JUNIOR, MID, SENIOR, EXPERT
-    }
-
-    public enum JobStatus {
-        OPEN, CLOSED, EXPIRED
+        updatedAt = LocalDateTime.now();
     }
 }
