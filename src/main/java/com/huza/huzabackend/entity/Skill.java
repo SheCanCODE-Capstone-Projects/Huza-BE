@@ -18,8 +18,9 @@ public class Skill {
     @Column(nullable = false, unique = true)
     private String name;
 
-    // NEW — same Category table Job uses, so job categories and skill categories line up
+    // Keep this nullable for compatibility with existing data rows that were created
+    // before the category relationship was introduced.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
+    @JoinColumn(name = "category_id")
     private Category category;
 }

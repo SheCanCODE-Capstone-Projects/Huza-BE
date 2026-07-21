@@ -33,6 +33,9 @@ public class Application {
     @Column(columnDefinition = "TEXT")
     private String coverLetter;
 
+    @Column(name = "resume_url")
+    private String resumeUrl;
+
     @Column(name = "proposed_rate")
     private Double proposedRate;
 
@@ -58,12 +61,7 @@ public class Application {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public enum ApplicationStatus {
-        PENDING,
-        REVIEWED,
-        SHORTLISTED,
-        ACCEPTED,
-        REJECTED,
-        WITHDRAWN
+    public void withdraw() {
+        this.status = ApplicationStatus.WITHDRAWN;
     }
 }

@@ -3,10 +3,10 @@ package com.huza.huzabackend.service;
 import com.huza.huzabackend.dto.ApplicantResponse;
 import com.huza.huzabackend.dto.ApplicantSearchRequest;
 import com.huza.huzabackend.entity.Application;
+import com.huza.huzabackend.entity.ApplicationStatus;
 import com.huza.huzabackend.entity.Job;
 import com.huza.huzabackend.entity.Portfolio;
 import com.huza.huzabackend.entity.User;
-import com.huza.huzabackend.entity.Application.ApplicationStatus;
 import com.huza.huzabackend.repository.ApplicationRepository;
 import com.huza.huzabackend.repository.JobRepository;
 import com.huza.huzabackend.repository.PortfolioRepository;
@@ -140,7 +140,7 @@ public class ApplicantSearchService {
         User artist = application.getArtist();
 
         // Get portfolio count
-        int portfolioCount = portfolioRepository.countByArtist(artist);
+        int portfolioCount = Math.toIntExact(portfolioRepository.countByArtist(artist));
 
         return ApplicantResponse.builder()
                 .applicationId(application.getId())

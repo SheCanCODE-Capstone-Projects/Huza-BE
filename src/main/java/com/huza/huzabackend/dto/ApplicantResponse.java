@@ -1,6 +1,6 @@
 package com.huza.huzabackend.dto;
 
-import com.huza.huzabackend.entity.Application.ApplicationStatus;
+import com.huza.huzabackend.entity.ApplicationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

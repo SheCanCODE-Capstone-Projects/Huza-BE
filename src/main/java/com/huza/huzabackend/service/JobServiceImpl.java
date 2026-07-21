@@ -36,15 +36,17 @@ public class JobServiceImpl implements JobService {
         Category category = resolveSkillBackedCategory(request.getCategoryId()); // CHANGED
 
         Job job = Job.builder()
-                .recruiter(recruiter)
                 .category(category)
+                .company(recruiter.getCompany())
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .location(request.getLocation())
-                .salary(request.getSalary())
+                .salaryMin(request.getSalary())
+                .salaryMax(request.getSalary())
                 .contractType(parseEnum(ContractType.class, request.getContractType()))
                 .experienceLevel(parseEnum(ExperienceLevel.class, request.getExperienceLevel()))
-                .deadline(request.getDeadline())
+                .applicationDeadline(null)
+                .postedBy(request.getRecruiterUserId())
                 .status(JobStatus.OPEN)
                 .build();
 
@@ -60,16 +62,19 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public JobResponse updateJob(Long jobId, UpdateJobRequest request) {
-        Job job = jobRepository.findByIdWithDetails(jobId)
+        Job job = jobRepository.findById(String.valueOf(jobId))
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + jobId));
 
         if (request.getTitle() != null) job.setTitle(request.getTitle());
         if (request.getDescription() != null) job.setDescription(request.getDescription());
         if (request.getLocation() != null) job.setLocation(request.getLocation());
-        if (request.getSalary() != null) job.setSalary(request.getSalary());
-        if (request.getContractType() != null) job.setContractType(parseEnum(Job.ContractType.class, request.getContractType()));
-        if (request.getExperienceLevel() != null) job.setExperienceLevel(parseEnum(Job.ExperienceLevel.class, request.getExperienceLevel()));
-        if (request.getDeadline() != null) job.setDeadline(request.getDeadline());
+        if (request.getSalary() != null) {
+            job.setSalaryMin(request.getSalary());
+            job.setSalaryMax(request.getSalary());
+        }
+        if (request.getContractType() != null) job.setContractType(parseEnum(ContractType.class, request.getContractType()));
+        if (request.getExperienceLevel() != null) job.setExperienceLevel(parseEnum(ExperienceLevel.class, request.getExperienceLevel()));
+        if (request.getDeadline() != null) job.setApplicationDeadline(request.getDeadline().atStartOfDay());
 
         if (request.getCategoryId() != null) {
             job.setCategory(resolveSkillBackedCategory(request.getCategoryId())); // CHANGED
@@ -83,7 +88,7 @@ public class JobServiceImpl implements JobService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryId));
 
-        if (!skillRepository.existsByCategory_CategoryId(categoryId)) {
+        if (!skillRepository.existsByCategory_Id(categoryId)) {
             throw new IllegalArgumentException(
                     "Category '" + category.getCategoryName() + "' has no skills assigned to it yet — " +
                             "add at least one skill to this category before posting a job under it.");
@@ -95,7 +100,7 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public void deleteJob(Long jobId) {
-        Job job = jobRepository.findById(jobId)
+        Job job = jobRepository.findById(String.valueOf(jobId))
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + jobId));
         jobRepository.delete(job);
     }
@@ -103,16 +108,16 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public JobResponse closeJob(Long jobId) {
-        Job job = jobRepository.findByIdWithDetails(jobId)
+        Job job = jobRepository.findById(String.valueOf(jobId))
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + jobId));
-        job.setStatus(Job.JobStatus.CLOSED);
+        job.setStatus(JobStatus.CLOSED);
         return jobMapper.toResponse(jobRepository.save(job));
     }
 
     @Override
     @Transactional(readOnly = true)
     public JobResponse getJob(Long jobId) {
-        Job job = jobRepository.findByIdWithDetails(jobId)
+        Job job = jobRepository.findById(String.valueOf(jobId))
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + jobId));
         return jobMapper.toResponse(job);
     }
@@ -122,10 +127,12 @@ public class JobServiceImpl implements JobService {
     public List<JobResponse> getAllJobs(String status) {
         List<Job> jobs;
         if (status == null || status.trim().isEmpty()) {
-            jobs = jobRepository.findAllWithDetails();
+            jobs = jobRepository.findAll();
         } else {
-            Job.JobStatus jobStatus = parseEnum(Job.JobStatus.class, status);
-            jobs = jobRepository.findAllByStatusWithDetails(jobStatus);
+            JobStatus jobStatus = parseEnum(JobStatus.class, status);
+            jobs = jobRepository.findAll().stream()
+                    .filter(job -> job.getStatus() == jobStatus)
+                    .collect(Collectors.toList());
         }
         return jobs.stream()
                 .map(jobMapper::toResponse)
@@ -135,7 +142,7 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional(readOnly = true)
     public List<JobResponse> getJobsByRecruiter(String recruiterUserId) {
-        return jobRepository.findAllByRecruiterUserId(recruiterUserId).stream()
+        return jobRepository.findAllByPostedBy(recruiterUserId).stream()
                 .map(jobMapper::toResponse)
                 .collect(Collectors.toList());
     }

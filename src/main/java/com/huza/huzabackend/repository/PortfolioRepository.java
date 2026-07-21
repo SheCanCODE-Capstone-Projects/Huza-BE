@@ -18,4 +18,6 @@ public interface PortfolioRepository extends JpaRepository<Portfolio, String> {
     Optional<Portfolio> findByIdAndArtistId(String id, String artistId);
 
     long countByArtistId(String artistId);
+
+    long countByArtist(User artist);
 }

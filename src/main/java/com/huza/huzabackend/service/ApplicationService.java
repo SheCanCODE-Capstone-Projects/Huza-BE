@@ -42,7 +42,7 @@ public class ApplicationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found or inactive with ID: " + request.getJobId()));
 
         // Check if already applied
-        if (applicationRepository.existsByJobIdAndArtistId(request.getJobId(), artistId)) {
+        if (applicationRepository.existsByJob_IdAndArtist_Id(request.getJobId(), artistId)) {
             throw new DuplicateResourceException("You have already applied for this job");
         }
 
@@ -68,7 +68,7 @@ public class ApplicationService {
     public void withdrawApplication(String applicationId, String artistId) {
         log.info("Artist {} withdrawing application {}", artistId, applicationId);
 
-        Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
+        Application application = applicationRepository.findByIdAndArtist_Id(applicationId, artistId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
 
         application.withdraw();
@@ -83,7 +83,7 @@ public class ApplicationService {
     @Transactional(readOnly = true)
     public List<Application> getApplicationHistory(String artistId) {
         log.info("Fetching application history for artist: {}", artistId);
-        return applicationRepository.findByArtistIdOrderByAppliedAtDesc(artistId);
+        return applicationRepository.findByArtist_IdOrderByCreatedAtDesc(artistId);
     }
 
     /**

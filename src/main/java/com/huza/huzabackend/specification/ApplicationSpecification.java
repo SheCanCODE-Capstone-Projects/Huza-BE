@@ -77,7 +77,7 @@ public class ApplicationSpecification {
         return (root, query, cb) -> cb.equal(root.get("artist"), artist);
     }
 
-    public static Specification<Application> byStatus(Application.ApplicationStatus status) {
+    public static Specification<Application> byStatus(com.huza.huzabackend.entity.ApplicationStatus status) {
         return (root, query, cb) -> status == null ? cb.conjunction() : cb.equal(root.get("status"), status);
     }
 }

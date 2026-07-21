@@ -1,6 +1,6 @@
 package com.huza.huzabackend.dto;
 
-import com.huza.huzabackend.entity.Application.ApplicationStatus;
+import com.huza.huzabackend.entity.ApplicationStatus;
 import lombok.Data;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

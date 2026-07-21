@@ -183,4 +183,12 @@ public class User implements UserDetails {
     public void setOtpVerified(boolean otpVerified) {
         this.otpVerified = otpVerified;
     }
+
+    public String getHeadline() {
+        return artistProfile != null ? artistProfile.getHeadline() : null;
+    }
+
+    public Integer getExperienceYears() {
+        return artistProfile != null ? artistProfile.getExperienceYears() : null;
+    }
 }

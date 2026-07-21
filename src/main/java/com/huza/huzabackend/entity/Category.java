@@ -17,8 +17,8 @@ import java.time.LocalDateTime;
 public class Category {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -41,5 +41,13 @@ public class Category {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public Long getCategoryId() {
+        return id;
+    }
+
+    public String getCategoryName() {
+        return name;
     }
 }

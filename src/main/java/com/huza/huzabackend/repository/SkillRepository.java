@@ -16,6 +16,6 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
     @Query("SELECT s FROM Skill s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :search, '%'))")
     List<Skill> searchSkills(@Param("search") String search);
 
-    // NEW — true only if at least one skill belongs to this category
-    boolean existsByCategory_CategoryId(Long categoryId);
+    // True when at least one skill belongs to the requested category.
+    boolean existsByCategory_Id(Long categoryId);
 }
