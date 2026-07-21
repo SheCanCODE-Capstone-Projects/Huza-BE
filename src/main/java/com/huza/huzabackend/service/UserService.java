@@ -1,323 +1,323 @@
-package com.huza.huzabackend.service;
-
-import com.huza.huzabackend.dto.LoginRequest; // Ensure you have this DTO
-import com.huza.huzabackend.dto.LoginResponse; // Ensure you have this DTO
-import com.huza.huzabackend.dto.RegisterRequest;
-import com.huza.huzabackend.entity.RecruiterType;
-import com.huza.huzabackend.entity.Role;
-import com.huza.huzabackend.entity.User;
-import com.huza.huzabackend.entity.UserStatus;
-import com.huza.huzabackend.exception.AccountBannedException;
-import com.huza.huzabackend.exception.AccountNotVerifiedException;
-import com.huza.huzabackend.exception.DuplicateResourceException;
-import com.huza.huzabackend.exception.InvalidCredentialsException;
-import com.huza.huzabackend.exception.ResourceNotFoundException;
-import com.huza.huzabackend.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-@Service
-@RequiredArgsConstructor
-@Slf4j
-@SuppressWarnings("unused")
-public class UserService {
-
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService; // Used to generate the authentication token
-
-    // ===== AUTHENTICATION / LOGIN =====
-
-    @Transactional
-    public LoginResponse login(LoginRequest request) {
-        log.info("🔑 Attempting authentication for user: {}", request.getEmail());
-
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElse(null);
-
-        try {
-            // 1. Authenticate with Spring Security
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
-            );
-        } catch (AuthenticationException e) {
-            if (user != null && isLegacyPasswordMatch(user, request.getPassword())) {
-                user.setPassword(passwordEncoder.encode(request.getPassword()));
-                userRepository.save(user);
-            } else {
-                log.warn("❌ Authentication failed for user: {}", request.getEmail());
-                if (user != null) {
-                    recordFailedLoginAttempt(user.getId());
+    package com.huza.huzabackend.service;
+    
+    import com.huza.huzabackend.dto.LoginRequest; // Ensure you have this DTO
+    import com.huza.huzabackend.dto.LoginResponse; // Ensure you have this DTO
+    import com.huza.huzabackend.dto.RegisterRequest;
+    import com.huza.huzabackend.entity.RecruiterType;
+    import com.huza.huzabackend.entity.Role;
+    import com.huza.huzabackend.entity.User;
+    import com.huza.huzabackend.entity.UserStatus;
+    import com.huza.huzabackend.exception.AccountBannedException;
+    import com.huza.huzabackend.exception.AccountNotVerifiedException;
+    import com.huza.huzabackend.exception.DuplicateResourceException;
+    import com.huza.huzabackend.exception.InvalidCredentialsException;
+    import com.huza.huzabackend.exception.ResourceNotFoundException;
+    import com.huza.huzabackend.repository.UserRepository;
+    import lombok.RequiredArgsConstructor;
+    import lombok.extern.slf4j.Slf4j;
+    import org.springframework.security.authentication.AuthenticationManager;
+    import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+    import org.springframework.security.core.AuthenticationException;
+    import org.springframework.security.crypto.password.PasswordEncoder;
+    import org.springframework.stereotype.Service;
+    import org.springframework.transaction.annotation.Transactional;
+    
+    import java.time.LocalDateTime;
+    import java.util.List;
+    import java.util.Optional;
+    
+    @Service
+    @RequiredArgsConstructor
+    @Slf4j
+    @SuppressWarnings("unused")
+    public class UserService {
+    
+        private final UserRepository userRepository;
+        private final PasswordEncoder passwordEncoder;
+        private final AuthenticationManager authenticationManager;
+        private final JwtService jwtService; // Used to generate the authentication token
+    
+        // ===== AUTHENTICATION / LOGIN =====
+    
+        @Transactional
+        public LoginResponse login(LoginRequest request) {
+            log.info("🔑 Attempting authentication for user: {}", request.getEmail());
+    
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElse(null);
+    
+            try {
+                // 1. Authenticate with Spring Security
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getEmail(),
+                                request.getPassword()
+                        )
+                );
+            } catch (AuthenticationException e) {
+                if (user != null && isLegacyPasswordMatch(user, request.getPassword())) {
+                    user.setPassword(passwordEncoder.encode(request.getPassword()));
+                    userRepository.save(user);
+                } else {
+                    log.warn("❌ Authentication failed for user: {}", request.getEmail());
+                    if (user != null) {
+                        recordFailedLoginAttempt(user.getId());
+                    }
+                    throw new InvalidCredentialsException("Invalid email or password");
                 }
-                throw new InvalidCredentialsException("Invalid email or password");
+            }
+    
+            if (user == null) {
+                throw new ResourceNotFoundException("User not found after authentication");
+            }
+    
+            // 2. Verify Account Eligibility
+            if (user.getStatus() == UserStatus.BANNED) {
+                throw new AccountBannedException("Your account has been banned. Please contact support.");
+            }
+            if (!user.isVerified() && user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+                throw new AccountNotVerifiedException("Please verify your email address before logging in.");
+            }
+    
+            // 3. Update login status and audit metrics
+            updateLastLogin(user.getId());
+    
+            // 4. Generate token and return details
+            String jwtToken = jwtService.generateToken(user);
+    
+            log.info("✅ User authenticated successfully: {}", user.getEmail());
+            return LoginResponse.builder()
+                    .token(jwtToken)
+                    .email(user.getEmail())
+                    .fullName(user.getFullName())
+                    .role(user.getRole().name())
+                    .build();
+        }
+    
+        private boolean isLegacyPasswordMatch(User user, String rawPassword) {
+            if (user.getPassword() == null || rawPassword == null) {
+                return false;
+            }
+    
+            return passwordEncoder.matches(rawPassword, user.getPassword())
+                    || rawPassword.equals(user.getPassword());
+        }
+    
+        // ===== REGISTRATION =====
+    
+        @Transactional
+        public User registerUser(RegisterRequest request) {
+            log.info("📝 Registering new user with email: {}", request.getEmail());
+    
+            // Validate password match
+            if (!request.isPasswordMatching()) {
+                throw new IllegalArgumentException("Passwords do not match");
+            }
+    
+            // Validate unique fields
+            validateUniqueFields(request);
+    
+            // Map role from request
+            Role role = mapRole(request.getRole());
+    
+            // Build user
+            User.UserBuilder builder = User.builder()
+                    .email(request.getEmail())
+                    .username(request.getEmail())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .fullName(request.getFullName())
+                    .phoneNumber(request.getPhoneNumber())
+                    .location(request.getLocation())
+                    .role(role)
+                    .status(UserStatus.PENDING_VERIFICATION)
+                    .isVerified(false)
+                    .otpVerified(false)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .failedLoginAttempts(0);
+    
+            // If recruiter, add recruiter type and TIN
+            if (role == Role.RECRUITER) {
+                RecruiterType recruiterType = mapRecruiterType(request.getRecruiterType());
+                builder.recruiterType(recruiterType);
+    
+                if (recruiterType == RecruiterType.COMPANY && request.getTinNumber() != null) {
+                    builder.tinNumber(request.getTinNumber());
+                }
+                if (recruiterType == RecruiterType.INDIVIDUAL && request.getNationalId() != null) {
+                    builder.nationalId(request.getNationalId());
+                }
+            }
+    
+            User savedUser = userRepository.save(builder.build());
+            log.info("✅ User registered successfully with ID: {}", savedUser.getId());
+    
+            return savedUser;
+        }
+    
+        private Role mapRole(String roleStr) {
+            if (roleStr == null) return Role.USER;
+            try {
+                return Role.valueOf(roleStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return Role.USER;
             }
         }
-
-        if (user == null) {
-            throw new ResourceNotFoundException("User not found after authentication");
-        }
-
-        // 2. Verify Account Eligibility
-        if (user.getStatus() == UserStatus.BANNED) {
-            throw new AccountBannedException("Your account has been banned. Please contact support.");
-        }
-        if (!user.isVerified() && user.getStatus() == UserStatus.PENDING_VERIFICATION) {
-            throw new AccountNotVerifiedException("Please verify your email address before logging in.");
-        }
-
-        // 3. Update login status and audit metrics
-        updateLastLogin(user.getId());
-
-        // 4. Generate token and return details
-        String jwtToken = jwtService.generateToken(user);
-
-        log.info("✅ User authenticated successfully: {}", user.getEmail());
-        return LoginResponse.builder()
-                .token(jwtToken)
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .role(user.getRole().name())
-                .build();
-    }
-
-    private boolean isLegacyPasswordMatch(User user, String rawPassword) {
-        if (user.getPassword() == null || rawPassword == null) {
-            return false;
-        }
-
-        return passwordEncoder.matches(rawPassword, user.getPassword())
-                || rawPassword.equals(user.getPassword());
-    }
-
-    // ===== REGISTRATION =====
-
-    @Transactional
-    public User registerUser(RegisterRequest request) {
-        log.info("📝 Registering new user with email: {}", request.getEmail());
-
-        // Validate password match
-        if (!request.isPasswordMatching()) {
-            throw new IllegalArgumentException("Passwords do not match");
-        }
-
-        // Validate unique fields
-        validateUniqueFields(request);
-
-        // Map role from request
-        Role role = mapRole(request.getRole());
-
-        // Build user
-        User.UserBuilder builder = User.builder()
-                .email(request.getEmail())
-                .username(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
-                .phoneNumber(request.getPhoneNumber())
-                .location(request.getLocation())
-                .role(role)
-                .status(UserStatus.PENDING_VERIFICATION)
-                .isVerified(false)
-                .otpVerified(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .failedLoginAttempts(0);
-
-        // If recruiter, add recruiter type and TIN
-        if (role == Role.RECRUITER) {
-            RecruiterType recruiterType = mapRecruiterType(request.getRecruiterType());
-            builder.recruiterType(recruiterType);
-
-            if (recruiterType == RecruiterType.COMPANY && request.getTinNumber() != null) {
-                builder.tinNumber(request.getTinNumber());
-            }
-            if (recruiterType == RecruiterType.INDIVIDUAL && request.getNationalId() != null) {
-                builder.nationalId(request.getNationalId());
+    
+        private RecruiterType mapRecruiterType(String type) {
+            if (type == null) return RecruiterType.INDIVIDUAL;
+            try {
+                return RecruiterType.valueOf(type.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return RecruiterType.INDIVIDUAL;
             }
         }
-
-        User savedUser = userRepository.save(builder.build());
-        log.info("✅ User registered successfully with ID: {}", savedUser.getId());
-
-        return savedUser;
-    }
-
-    private Role mapRole(String roleStr) {
-        if (roleStr == null) return Role.USER;
-        try {
-            return Role.valueOf(roleStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return Role.USER;
-        }
-    }
-
-    private RecruiterType mapRecruiterType(String type) {
-        if (type == null) return RecruiterType.INDIVIDUAL;
-        try {
-            return RecruiterType.valueOf(type.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return RecruiterType.INDIVIDUAL;
-        }
-    }
-
-    private void validateUniqueFields(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Email already registered: " + request.getEmail());
-        }
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new DuplicateResourceException("Phone number already registered: " + request.getPhoneNumber());
-        }
-    }
-
-    // ===== VERIFICATION =====
-
-    @Transactional
-    public User verifyUser(String userId) {
-        log.info("🔐 Verifying user with ID: {}", userId);
-
-        User user = findById(userId);
-        user.activate();
-        user.setStatus(UserStatus.ACTIVE);
-        user.setOtpVerified(true);
-
-        User updatedUser = userRepository.save(user);
-        log.info("✅ User verified successfully: {}", userId);
-
-        return updatedUser;
-    }
-
-    // ===== FIND METHODS =====
-
-    public User findById(String userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
-    }
-
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
-
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
-    }
-
-    public List<User> findAllUsers() {
-        log.info("🔍 Fetching a list of all registered users");
-        return userRepository.findAll();
-    }
-
-    // ===== PROFILE MANAGEMENT =====
-
-    @Transactional
-    public User updateProfile(String userId, RegisterRequest request) {
-        log.info("✏️ Updating profile for user ID: {}", userId);
-
-        User user = findById(userId);
-
-        if (request.getFullName() != null) {
-            user.setFullName(request.getFullName());
-        }
-        if (request.getPhoneNumber() != null) {
-            if (!request.getPhoneNumber().equals(user.getPhoneNumber()) &&
-                    userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-                throw new DuplicateResourceException("Phone number already registered");
+    
+        private void validateUniqueFields(RegisterRequest request) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new DuplicateResourceException("Email already registered: " + request.getEmail());
             }
-            user.setPhoneNumber(request.getPhoneNumber());
+            if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+                throw new DuplicateResourceException("Phone number already registered: " + request.getPhoneNumber());
+            }
         }
-        if (request.getLocation() != null) {
-            user.setLocation(request.getLocation());
+    
+        // ===== VERIFICATION =====
+    
+        @Transactional
+        public User verifyUser(String userId) {
+            log.info("🔐 Verifying user with ID: {}", userId);
+    
+            User user = findById(userId);
+            user.activate();
+            user.setStatus(UserStatus.ACTIVE);
+            user.setOtpVerified(true);
+    
+            User updatedUser = userRepository.save(user);
+            log.info("✅ User verified successfully: {}", userId);
+    
+            return updatedUser;
         }
-
-        user.setUpdatedAt(LocalDateTime.now());
-        return userRepository.save(user);
-    }
-
-    // ===== STATUS MANAGEMENT =====
-
-    @Transactional
-    public User updateUserStatus(String userId, UserStatus status) {
-        log.info("📊 Updating status for user ID: {} to {}", userId, status);
-
-        User user = findById(userId);
-        user.setStatus(status);
-
-        if (status == UserStatus.ACTIVE) {
-            user.setVerified(true);
+    
+        // ===== FIND METHODS =====
+    
+        public User findById(String userId) {
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
         }
-
-        return userRepository.save(user);
+    
+        public Optional<User> findByEmail(String email) {
+            return userRepository.findByEmail(email);
+        }
+    
+        public Optional<User> findByUsername(String username) {
+            return userRepository.findByUsername(username);
+        }
+    
+        public boolean existsByEmail(String email) {
+            return userRepository.existsByEmail(email);
+        }
+    
+        public boolean existsByUsername(String username) {
+            return userRepository.existsByUsername(username);
+        }
+    
+        public List<User> findAllUsers() {
+            log.info("🔍 Fetching a list of all registered users");
+            return userRepository.findAll();
+        }
+    
+        // ===== PROFILE MANAGEMENT =====
+    
+        @Transactional
+        public User updateProfile(String userId, RegisterRequest request) {
+            log.info("✏️ Updating profile for user ID: {}", userId);
+    
+            User user = findById(userId);
+    
+            if (request.getFullName() != null) {
+                user.setFullName(request.getFullName());
+            }
+            if (request.getPhoneNumber() != null) {
+                if (!request.getPhoneNumber().equals(user.getPhoneNumber()) &&
+                        userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+                    throw new DuplicateResourceException("Phone number already registered");
+                }
+                user.setPhoneNumber(request.getPhoneNumber());
+            }
+            if (request.getLocation() != null) {
+                user.setLocation(request.getLocation());
+            }
+    
+            user.setUpdatedAt(LocalDateTime.now());
+            return userRepository.save(user);
+        }
+    
+        // ===== STATUS MANAGEMENT =====
+    
+        @Transactional
+        public User updateUserStatus(String userId, UserStatus status) {
+            log.info("📊 Updating status for user ID: {} to {}", userId, status);
+    
+            User user = findById(userId);
+            user.setStatus(status);
+    
+            if (status == UserStatus.ACTIVE) {
+                user.setVerified(true);
+            }
+    
+            return userRepository.save(user);
+        }
+    
+        @Transactional
+        public User updateUserRole(String userId, Role role) {
+            log.info("🎭 Updating role for user ID: {} to {}", userId, role);
+    
+            User user = findById(userId);
+            user.setRole(role);
+            user.setUpdatedAt(LocalDateTime.now());
+    
+            return userRepository.save(user);
+        }
+    
+        // ===== DELETE =====
+    
+        @Transactional
+        public void deleteUser(String userId) {
+            log.info("🗑️ Deleting user with ID: {}", userId);
+    
+            User user = findById(userId);
+            userRepository.delete(user);
+    
+            log.info("✅ User deleted successfully: {}", userId);
+        }
+    
+        // ===== LOGIN HELPERS (For KEZA) =====
+    
+        @Transactional
+        public User updateLastLogin(String userId) {
+            User user = findById(userId);
+            user.setLastLogin(LocalDateTime.now());
+            user.resetFailedLoginAttempts();
+            return userRepository.save(user);
+        }
+    
+        @Transactional
+        public void recordFailedLoginAttempt(String userId) {
+            User user = findById(userId);
+            user.incrementFailedLoginAttempts();
+            userRepository.save(user);
+        }
+    
+        public boolean isUserVerified(String username) {
+            return userRepository.findByUsername(username)
+                    .map(User::isVerified)
+                    .orElse(false);
+        }
+    
+        public boolean isUserActive(String username) {
+            return userRepository.findByUsername(username)
+                    .map(user -> user.getStatus() == UserStatus.ACTIVE)
+                    .orElse(false);
+        }
     }
-
-    @Transactional
-    public User updateUserRole(String userId, Role role) {
-        log.info("🎭 Updating role for user ID: {} to {}", userId, role);
-
-        User user = findById(userId);
-        user.setRole(role);
-        user.setUpdatedAt(LocalDateTime.now());
-
-        return userRepository.save(user);
-    }
-
-    // ===== DELETE =====
-
-    @Transactional
-    public void deleteUser(String userId) {
-        log.info("🗑️ Deleting user with ID: {}", userId);
-
-        User user = findById(userId);
-        userRepository.delete(user);
-
-        log.info("✅ User deleted successfully: {}", userId);
-    }
-
-    // ===== LOGIN HELPERS (For KEZA) =====
-
-    @Transactional
-    public User updateLastLogin(String userId) {
-        User user = findById(userId);
-        user.setLastLogin(LocalDateTime.now());
-        user.resetFailedLoginAttempts();
-        return userRepository.save(user);
-    }
-
-    @Transactional
-    public void recordFailedLoginAttempt(String userId) {
-        User user = findById(userId);
-        user.incrementFailedLoginAttempts();
-        userRepository.save(user);
-    }
-
-    public boolean isUserVerified(String username) {
-        return userRepository.findByUsername(username)
-                .map(User::isVerified)
-                .orElse(false);
-    }
-
-    public boolean isUserActive(String username) {
-        return userRepository.findByUsername(username)
-                .map(user -> user.getStatus() == UserStatus.ACTIVE)
-                .orElse(false);
-    }
-}
