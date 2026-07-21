@@ -78,14 +78,6 @@ public class Job {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public enum ContractType {
-        FULL_TIME, PART_TIME, CONTRACT, FREELANCE, INTERNSHIP
-    }
-
-    public enum ExperienceLevel {
-        ENTRY, JUNIOR, MID, SENIOR, EXPERT
-    }
-
     public enum JobStatus {
         PENDING, OPEN, CLOSED, EXPIRED
     }

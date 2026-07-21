@@ -62,13 +62,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/artist/skills/**").permitAll()
                         .requestMatchers("/api/skills/**").permitAll()
 //                        .requestMatchers("/api/moderation/**").hasAnyRole("ADMIN", "MODERATOR")   // rule A
-                        .requestMatchers("/api/**", "/api/admin/**", "/api/moderation/**").permitAll()  // rule B, contains /api/moderation/** again
+                        .requestMatchers("/api/**", "/api/admin/**", "/api/moderation/**","/api/artist/**").permitAll()  // rule B, contains /api/moderation/** again
 //                        .requestMatchers("/api/moderation/**").hasAnyRole("ADMIN", "MODERATOR")   // rule A
                         .requestMatchers("/api/**", "/api/admin/**", "/api/moderation/**").permitAll()  // rule B, contains /api/moderation/** again
 //                                .requestMatchers("/api/**","/api/admin/**","/api/moderation/**").permitAll()
                                 .requestMatchers("/api/users/**").permitAll()
                                 .requestMatchers("/api/recruiter/profile/**").permitAll()
-                                .requestMatchers("/admin/**").hasRole("ADMIN")
+//                                .requestMatchers("/admin/**").hasRole("ADMIN")
 
 //                        .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated()

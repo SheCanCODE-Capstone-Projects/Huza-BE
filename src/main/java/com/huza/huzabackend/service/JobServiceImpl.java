@@ -42,8 +42,8 @@ public class JobServiceImpl implements JobService {
                 .description(request.getDescription())
                 .location(request.getLocation())
                 .salary(request.getSalary())
-                .contractType(parseEnum(Job.ContractType.class, request.getContractType()))
-                .experienceLevel(parseEnum(Job.ExperienceLevel.class, request.getExperienceLevel()))
+                .contractType(parseEnum(ContractType.class, request.getContractType()))
+                .experienceLevel(parseEnum(ExperienceLevel.class, request.getExperienceLevel()))
                 .deadline(request.getDeadline())
                 .status(Job.JobStatus.PENDING)
                 .build();
@@ -68,8 +68,8 @@ public class JobServiceImpl implements JobService {
         if (request.getDescription() != null) job.setDescription(request.getDescription());
         if (request.getLocation() != null) job.setLocation(request.getLocation());
         if (request.getSalary() != null) job.setSalary(request.getSalary());
-        if (request.getContractType() != null) job.setContractType(parseEnum(Job.ContractType.class, request.getContractType()));
-        if (request.getExperienceLevel() != null) job.setExperienceLevel(parseEnum(Job.ExperienceLevel.class, request.getExperienceLevel()));
+        if (request.getContractType() != null) job.setContractType(parseEnum(ContractType.class, request.getContractType()));
+        if (request.getExperienceLevel() != null) job.setExperienceLevel(parseEnum(ExperienceLevel.class, request.getExperienceLevel()));
         if (request.getDeadline() != null) job.setDeadline(request.getDeadline());
 
         if (request.getCategoryId() != null) {
