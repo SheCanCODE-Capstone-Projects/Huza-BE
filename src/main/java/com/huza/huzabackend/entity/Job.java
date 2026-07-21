@@ -59,7 +59,7 @@ public class Job {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private JobStatus status = JobStatus.OPEN;
+    private JobStatus status = JobStatus.PENDING;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -87,6 +87,6 @@ public class Job {
     }
 
     public enum JobStatus {
-        OPEN, CLOSED, EXPIRED
+        PENDING, OPEN, CLOSED, EXPIRED
     }
 }

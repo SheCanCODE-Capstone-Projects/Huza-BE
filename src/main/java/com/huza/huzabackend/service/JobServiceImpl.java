@@ -33,7 +33,7 @@ public class JobServiceImpl implements JobService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Recruiter profile not found for user ID: " + request.getRecruiterUserId()));
 
-        Category category = resolveSkillBackedCategory(request.getCategoryId()); // CHANGED
+        Category category = resolveSkillBackedCategory(request.getCategoryId());
 
         Job job = Job.builder()
                 .recruiter(recruiter)
@@ -45,10 +45,11 @@ public class JobServiceImpl implements JobService {
                 .contractType(parseEnum(Job.ContractType.class, request.getContractType()))
                 .experienceLevel(parseEnum(Job.ExperienceLevel.class, request.getExperienceLevel()))
                 .deadline(request.getDeadline())
-                .status(Job.JobStatus.OPEN)
+                .status(Job.JobStatus.PENDING)
                 .build();
 
-        if (request.getCompanyId() != null) {
+        // CHANGED — treat companyId of 0 (or null) as "no company"
+        if (request.getCompanyId() != null && request.getCompanyId() > 0) {
             Company company = companyRepository.findById(request.getCompanyId())
                     .orElseThrow(() -> new ResourceNotFoundException("Company not found: " + request.getCompanyId()));
             job.setCompany(company);
@@ -122,9 +123,12 @@ public class JobServiceImpl implements JobService {
     public List<JobResponse> getAllJobs(String status) {
         List<Job> jobs;
         if (status == null || status.trim().isEmpty()) {
-            jobs = jobRepository.findAllWithDetails();
+            jobs = jobRepository.findAllByStatusWithDetails(Job.JobStatus.OPEN);
         } else {
             Job.JobStatus jobStatus = parseEnum(Job.JobStatus.class, status);
+            if (jobStatus == Job.JobStatus.PENDING) {
+                throw new IllegalArgumentException("Pending jobs are visible to moderators only");
+            }
             jobs = jobRepository.findAllByStatusWithDetails(jobStatus);
         }
         return jobs.stream()

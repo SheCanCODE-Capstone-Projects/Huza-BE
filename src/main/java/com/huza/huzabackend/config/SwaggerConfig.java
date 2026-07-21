@@ -21,6 +21,12 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        SecurityScheme bearerScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .description("Paste the JWT returned by the Huza login endpoint.");
+
         Scopes scopes = new Scopes()
                 .addString("openid", "OpenID identifier")
                 .addString("email", "Access to your email address")
@@ -36,6 +42,7 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .components(new Components()
+                        .addSecuritySchemes("bearerAuth", bearerScheme)
                         .addSecuritySchemes("google_oauth2", googleOAuthScheme))
                 .addSecurityItem(new SecurityRequirement().addList("google_oauth2", List.of("openid", "email", "profile")))
                 .info(new Info()

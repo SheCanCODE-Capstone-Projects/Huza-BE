@@ -21,7 +21,7 @@ public class ArtistSkillService {
     private final SkillRepository skillRepository;
     private final ArtistProfileRepository artistProfileRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ArtistSkillResponseDTO> getSkillsByArtist(String artistId) {
         return artistSkillRepository.findByArtistProfileId(artistId).stream()
                 .map(this::toDto)

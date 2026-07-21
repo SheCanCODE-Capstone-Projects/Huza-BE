@@ -29,7 +29,7 @@ public class ArtistProfileService {
     private static final long MAX_PICTURE_SIZE = 5 * 1024 * 1024;
     private String uploadDir = "uploads/profile-pictures";
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ArtistProfileResponseDTO getArtistProfile(String artistId) {
         // Trim the space but keep it as a String type to match UserRepository
         String cleanedId = artistId.trim();
@@ -119,7 +119,7 @@ public class ArtistProfileService {
         return artistProfileMapper.toResponseDto(user, profile);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public byte[] getProfilePictureBytes(String artistId) {
         User user = userRepository.findById(artistId.trim())
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + artistId));
@@ -130,7 +130,7 @@ public class ArtistProfileService {
         return user.getProfilePictureData();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public String getProfilePictureContentType(String artistId) {
         User user = userRepository.findById(artistId.trim())
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + artistId));

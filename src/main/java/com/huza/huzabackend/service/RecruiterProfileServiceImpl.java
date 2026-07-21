@@ -32,7 +32,7 @@ public class RecruiterProfileServiceImpl implements RecruiterProfileService {
     private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList("image/jpeg", "image/png", "image/jpg");
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public RecruiterProfileResponse getRecruiterProfileByUserId(String userId) {
         RecruiterProfile profile = recruiterProfileRepository.findByUserIdWithDetails(userId)
                 .orElseGet(() -> createDefaultProfile(userId));

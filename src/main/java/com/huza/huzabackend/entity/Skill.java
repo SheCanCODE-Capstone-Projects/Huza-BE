@@ -1,5 +1,6 @@
 package com.huza.huzabackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,8 +19,8 @@ public class Skill {
     @Column(nullable = false, unique = true)
     private String name;
 
-    // NEW — same Category table Job uses, so job categories and skill categories line up
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Category category;
 }

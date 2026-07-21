@@ -55,12 +55,17 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**", "/api/auth/**", "/login", "/oauth2/**", "/login/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs").permitAll()
+//                        .requestMatchers("/api/moderation/**").hasAnyRole("ADMIN", "MODERATOR")
 
                         // ADD THIS LINE HERE to let your new endpoints bypass security for public viewing/testing:
                         .requestMatchers("/api/artist/profile/**").permitAll()
                         .requestMatchers("/api/artist/skills/**").permitAll()
                         .requestMatchers("/api/skills/**").permitAll()
-                                .requestMatchers("/api/**").permitAll()
+//                        .requestMatchers("/api/moderation/**").hasAnyRole("ADMIN", "MODERATOR")   // rule A
+                        .requestMatchers("/api/**", "/api/admin/**", "/api/moderation/**").permitAll()  // rule B, contains /api/moderation/** again
+//                        .requestMatchers("/api/moderation/**").hasAnyRole("ADMIN", "MODERATOR")   // rule A
+                        .requestMatchers("/api/**", "/api/admin/**", "/api/moderation/**").permitAll()  // rule B, contains /api/moderation/** again
+//                                .requestMatchers("/api/**","/api/admin/**","/api/moderation/**").permitAll()
                                 .requestMatchers("/api/users/**").permitAll()
                                 .requestMatchers("/api/recruiter/profile/**").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -87,9 +92,13 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Adjust or add ports your teammates use (e.g., 3000, 5173, etc.)
-        configuration.setAllowedOrigins(List.of("http://localhost:8005"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+        ));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
