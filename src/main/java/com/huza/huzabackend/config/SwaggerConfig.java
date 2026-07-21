@@ -21,6 +21,16 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+
+        // Bearer JWT scheme — this is what makes the "Authorize" button
+        // pop up a simple "paste your token" field
+        SecurityScheme bearerScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .description("Paste the JWT you received after logging in "
+                        + "(via /login or /api/auth/oauth2/google) here.");
+
         Scopes scopes = new Scopes()
                 .addString("openid", "OpenID identifier")
                 .addString("email", "Access to your email address")
@@ -36,16 +46,19 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .components(new Components()
+                        .addSecuritySchemes("bearerAuth", bearerScheme)
                         .addSecuritySchemes("google_oauth2", googleOAuthScheme))
+                // Each addSecurityItem is an alternative (OR) — user can auth with either
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .addSecurityItem(new SecurityRequirement().addList("google_oauth2", List.of("openid", "email", "profile")))
                 .info(new Info()
                         .title("Huza Authentication Service API")
                         .version("1.0.0")
                         .description("""
                                 **Huza Authentication Service**
-                                
+
                                 This API provides comprehensive user management and authentication features.
-                                
+
                                 ## Features
                                 - ✅ User Registration
                                 - ✅ Email Verification with OTP
@@ -55,6 +68,11 @@ public class SwaggerConfig {
                                 - ✅ JWT Authentication
                                 - ✅ OAuth2 Login
                                 - ✅ Password Reset with OTP
+
+                                ## Authenticating in this Swagger UI
+                                1. Log in with Google via `/login`, or with email/password via `/api/auth/login`.
+                                2. Copy the `token` value from the response.
+                                3. Click **Authorize** (top right) → paste the token under **bearerAuth** → Authorize.
                                 """)
                         .contact(new Contact()
                                 .name("Huza Team")
