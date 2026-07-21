@@ -33,7 +33,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     "Google account did not return an email address");
         }
 
-        Optional<User> existingUser = userRepository.findByEmail(email);
+        Optional<User> existingUser = userRepository.findByEmailIgnoreCase(email);
         if (existingUser.isEmpty()) {
             log.warn("Google login attempt for unregistered email: {}", email);
             // This error code is what OAuth2LoginFailureHandler below checks for
