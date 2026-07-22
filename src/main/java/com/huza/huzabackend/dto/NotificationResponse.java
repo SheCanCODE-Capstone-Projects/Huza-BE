@@ -3,7 +3,7 @@ package com.huza.huzabackend.dto;
 import com.huza.huzabackend.entity.NotificationType;
 import lombok.Builder;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 @Data
@@ -20,6 +20,7 @@ public class NotificationResponse {
 
     private NotificationType type;
 
+    @JsonProperty("isRead")
     private boolean isRead;
 
     private LocalDateTime createdAt;

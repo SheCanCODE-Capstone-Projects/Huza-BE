@@ -8,6 +8,8 @@ import com.huza.huzabackend.repository.NotificationRepository;
 import com.huza.huzabackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -57,10 +59,19 @@ public class NotificationService {
                 .toList();
     }
 
-    public void markAsRead(String id){
+    public void markAsRead(String id, String email) {
 
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Notification not found"));
+
+        if (!notification.getUser().getEmail().equals(email)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You are not allowed to modify this notification.");
+        }
 
         notification.setRead(true);
 

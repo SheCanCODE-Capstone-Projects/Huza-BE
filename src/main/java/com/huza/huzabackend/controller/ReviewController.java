@@ -3,7 +3,7 @@ package com.huza.huzabackend.controller;
 
 import com.huza.huzabackend.dto.ApiResponse;
 import com.huza.huzabackend.dto.ReviewRequest;
-import com.huza.huzabackend.entity.Review;
+import com.huza.huzabackend.dto.ReviewResponse;
 import com.huza.huzabackend.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +26,11 @@ public class ReviewController {
 
 
     @GetMapping("/{reviewedUserId}")
-    public ResponseEntity<ApiResponse<List<Review>>> getReviews(
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviews(
             @PathVariable String reviewedUserId) {
 
 
-        List<Review> reviews =
+        List<ReviewResponse> reviews =
                 reviewService.getReviews(reviewedUserId);
 
 
@@ -48,7 +48,7 @@ public class ReviewController {
 
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Review>> submitReview(
+    public ResponseEntity<ApiResponse<ReviewResponse>> submitReview(
             Authentication authentication,
             @Valid @RequestBody ReviewRequest request) {
 
@@ -57,7 +57,7 @@ public class ReviewController {
 
 
 
-        Review review =
+        ReviewResponse review =
                 reviewService.submitReview(
                         reviewerEmail,
                         request

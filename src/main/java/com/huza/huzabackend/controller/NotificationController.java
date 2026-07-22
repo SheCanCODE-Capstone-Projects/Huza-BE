@@ -43,11 +43,13 @@ public class NotificationController {
 
     @PutMapping("/{id}/read")
     public ResponseEntity<ApiResponse<String>> markAsRead(
+            Authentication authentication,
             @PathVariable String id) {
 
-
-        notificationService.markAsRead(id);
-
+        notificationService.markAsRead(
+                id,
+                authentication.getName()
+        );
 
         return ResponseEntity.ok(
                 ApiResponse.success(

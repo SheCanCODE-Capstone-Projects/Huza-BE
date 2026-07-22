@@ -29,6 +29,7 @@ public class Message {
     @Column(nullable = false, length = 3000)
     private String content;
 
+    @Column(length = 1000)
     private String attachmentUrl;
 
     @Column(name = "is_read")
