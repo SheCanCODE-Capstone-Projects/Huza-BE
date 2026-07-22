@@ -33,17 +33,17 @@ public class ApplicationService {
 
     @Transactional
     public ApplicationResponse applyForJob(String artistId, ApplicationRequest request) {
-        artistId = artistId.trim();
-        log.info("Artist {} applying for job {}", artistId, request.getJobId());
+        final String trimmedArtistId = artistId.trim();
+        log.info("Artist {} applying for job {}", trimmedArtistId, request.getJobId());
 
-        User artist = userRepository.findById(artistId)
-                .orElseThrow(() -> new ResourceNotFoundException("Artist not found with ID: " + artistId));
+        User artist = userRepository.findById(trimmedArtistId)
+                .orElseThrow(() -> new ResourceNotFoundException("Artist not found with ID: " + trimmedArtistId));
 
         Job job = jobRepository.findByJobIdAndStatus(request.getJobId(), Job.JobStatus.OPEN)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Job not found or not open with ID: " + request.getJobId()));
 
-        if (applicationRepository.existsByJob_JobIdAndArtist_Id(request.getJobId(), artistId)) {
+        if (applicationRepository.existsByJob_JobIdAndArtist_Id(request.getJobId(), trimmedArtistId)) {
             throw new DuplicateResourceException("You have already applied for this job");
         }
 
@@ -64,17 +64,17 @@ public class ApplicationService {
 
     @Transactional
     public void withdrawApplication(String applicationId, String artistId) {
-        applicationId = applicationId.trim();
-        artistId = artistId.trim();
-        log.info("Artist {} withdrawing application {}", artistId, applicationId);
+        final String trimmedApplicationId = applicationId.trim();
+        final String trimmedArtistId = artistId.trim();
+        log.info("Artist {} withdrawing application {}", trimmedArtistId, trimmedApplicationId);
 
-        Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
-                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
+        Application application = applicationRepository.findByIdAndArtistId(trimmedApplicationId, trimmedArtistId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + trimmedApplicationId));
 
         application.withdraw();
         applicationRepository.save(application);
 
-        log.info("Application {} withdrawn successfully", applicationId);
+        log.info("Application {} withdrawn successfully", trimmedApplicationId);
     }
 
     @Transactional(readOnly = true)
@@ -86,31 +86,42 @@ public class ApplicationService {
                 .toList();
     }
 
+//    @Transactional(readOnly = true)
+//    public ApplicationResponse getApplicationStatus(String applicationId, String artistId) {
+//        applicationId = applicationId.trim();
+//        artistId = artistId.trim();
+//        log.info("Fetching status for application: {}", applicationId);
+//        Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
+//        return applicationMapper.toResponse(application);
+//    }
+
     @Transactional(readOnly = true)
     public ApplicationResponse getApplicationStatus(String applicationId, String artistId) {
-        applicationId = applicationId.trim();
-        artistId = artistId.trim();
-        log.info("Fetching status for application: {}", applicationId);
-        Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
-                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
+        final String trimmedApplicationId = applicationId.trim();
+        final String trimmedArtistId = artistId.trim();
+        log.info("Fetching status for application: {}", trimmedApplicationId);
+        Application application = applicationRepository.findByIdAndArtistId(trimmedApplicationId, trimmedArtistId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + trimmedApplicationId));
         return applicationMapper.toResponse(application);
     }
 
     @Transactional(readOnly = true)
     public ApplicationResponse getApplicationById(String applicationId, String artistId) {
-        applicationId = applicationId.trim();
-        artistId = artistId.trim();
-        Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
-                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
+        final String trimmedApplicationId = applicationId.trim();
+        final String trimmedArtistId = artistId.trim();
+        Application application = applicationRepository.findByIdAndArtistId(trimmedApplicationId, trimmedArtistId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + trimmedApplicationId));
         return applicationMapper.toResponse(application);
     }
 
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getApplicantsForJob(Long jobId, String recruiterUserId) {
-        recruiterUserId = recruiterUserId.trim();
+        final String trimmedRecruiterId = recruiterUserId.trim();
         Job job = jobRepository.findByIdWithDetails(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + jobId));
-        validateRecruiterOwnsJob(job, recruiterUserId);
+        validateRecruiterOwnsJob(job, trimmedRecruiterId);
+
         return applicationRepository.findAllByJobIdWithDetails(jobId).stream()
                 .map(applicationMapper::toResponse)
                 .toList();
