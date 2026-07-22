@@ -1,6 +1,9 @@
 package com.huza.huzabackend.entity;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+
 
 @Entity
 @Table(name = "users")
@@ -43,8 +47,17 @@ public class User implements UserDetails {
     @Column(name = "location")
     private String location;
 
+    // Existing column — you can keep it unused, or repurpose it,
+    // but the two below are what actually hold the image now.
     @Column(name = "profile_picture")
     private String profilePicture;
+
+    @Lob
+    @Column(name = "profile_picture_data")
+    private byte[] profilePictureData;
+
+    @Column(name = "profile_picture_content_type")
+    private String profilePictureContentType;
 
     @Column(name = "bio")
     private String bio;
@@ -85,6 +98,10 @@ public class User implements UserDetails {
     @Column(name = "failed_login_attempts")
     private int failedLoginAttempts;
 
+    @JsonIgnore
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private ArtistProfile artistProfile;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -94,6 +111,7 @@ public class User implements UserDetails {
         status = UserStatus.PENDING_VERIFICATION;
         failedLoginAttempts = 0;
     }
+
 
     @PreUpdate
     protected void onUpdate() {
@@ -111,6 +129,7 @@ public class User implements UserDetails {
     public String getPassword() {
         return password;
     }
+
 
     @Override
     public String getUsername() {
@@ -137,8 +156,6 @@ public class User implements UserDetails {
         return status == UserStatus.ACTIVE && isVerified;
     }
 
-    // ===== STATUS MANAGEMENT METHODS =====
-
     public void activate() {
         this.isVerified = true;
         this.otpVerified = true;
@@ -157,17 +174,14 @@ public class User implements UserDetails {
         this.otpVerified = true;
     }
 
-    // ✅ ADD THIS METHOD - Resets failed login attempts
     public void resetFailedLoginAttempts() {
         this.failedLoginAttempts = 0;
     }
 
-    // ✅ ADD THIS METHOD - Increments failed login attempts
     public void incrementFailedLoginAttempts() {
         this.failedLoginAttempts++;
     }
 
-    // ✅ ADD THIS METHOD - Sets OTP verified
     public void setOtpVerified(boolean otpVerified) {
         this.otpVerified = otpVerified;
     }
