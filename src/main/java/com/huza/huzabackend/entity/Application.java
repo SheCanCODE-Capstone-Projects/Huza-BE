@@ -38,6 +38,9 @@ public class Application {
     @Column(name = "resume_url")
     private String resumeUrl;
 
+    @Column(name = "portfolio_url")
+    private String portfolioUrl;
+
     @Column(name = "applied_at", nullable = false, updatable = false)
     private LocalDateTime appliedAt;
 

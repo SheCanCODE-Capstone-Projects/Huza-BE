@@ -16,4 +16,6 @@ public class ApplicationRequest {
     private String coverLetter;
 
     private String resumeUrl;
+
+    private String portfolioUrl;
 }

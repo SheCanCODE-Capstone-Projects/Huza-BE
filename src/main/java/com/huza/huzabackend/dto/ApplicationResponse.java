@@ -18,6 +18,7 @@ public class ApplicationResponse {
     private ApplicationStatus status;
     private String coverLetter;
     private String resumeUrl;
+    private String portfolioUrl;
     private LocalDateTime appliedAt;
     private LocalDateTime updatedAt;
     private String reviewedBy;

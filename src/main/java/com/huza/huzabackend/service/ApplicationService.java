@@ -33,6 +33,7 @@ public class ApplicationService {
 
     @Transactional
     public ApplicationResponse applyForJob(String artistId, ApplicationRequest request) {
+        artistId = artistId.trim();
         log.info("Artist {} applying for job {}", artistId, request.getJobId());
 
         User artist = userRepository.findById(artistId)
@@ -51,6 +52,7 @@ public class ApplicationService {
                 .artist(artist)
                 .coverLetter(request.getCoverLetter())
                 .resumeUrl(request.getResumeUrl())
+                .portfolioUrl(request.getPortfolioUrl())
                 .status(ApplicationStatus.PENDING)
                 .build();
 
@@ -62,6 +64,8 @@ public class ApplicationService {
 
     @Transactional
     public void withdrawApplication(String applicationId, String artistId) {
+        applicationId = applicationId.trim();
+        artistId = artistId.trim();
         log.info("Artist {} withdrawing application {}", artistId, applicationId);
 
         Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
@@ -75,6 +79,7 @@ public class ApplicationService {
 
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getApplicationHistory(String artistId) {
+        artistId = artistId.trim();
         log.info("Fetching application history for artist: {}", artistId);
         return applicationRepository.findByArtistIdOrderByAppliedAtDesc(artistId).stream()
                 .map(applicationMapper::toResponse)
@@ -83,6 +88,8 @@ public class ApplicationService {
 
     @Transactional(readOnly = true)
     public ApplicationResponse getApplicationStatus(String applicationId, String artistId) {
+        applicationId = applicationId.trim();
+        artistId = artistId.trim();
         log.info("Fetching status for application: {}", applicationId);
         Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
@@ -91,6 +98,8 @@ public class ApplicationService {
 
     @Transactional(readOnly = true)
     public ApplicationResponse getApplicationById(String applicationId, String artistId) {
+        applicationId = applicationId.trim();
+        artistId = artistId.trim();
         Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
         return applicationMapper.toResponse(application);
@@ -98,6 +107,7 @@ public class ApplicationService {
 
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getApplicantsForJob(Long jobId, String recruiterUserId) {
+        recruiterUserId = recruiterUserId.trim();
         Job job = jobRepository.findByIdWithDetails(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + jobId));
         validateRecruiterOwnsJob(job, recruiterUserId);
@@ -108,6 +118,10 @@ public class ApplicationService {
 
     @Transactional
     public List<ApplicationResponse> assignJobToApplicants(Long jobId, String recruiterUserId, List<String> selectedApplicationIds) {
+        recruiterUserId = recruiterUserId.trim();
+        if (selectedApplicationIds != null) {
+            selectedApplicationIds = selectedApplicationIds.stream().map(String::trim).toList();
+        }
         if (selectedApplicationIds == null || selectedApplicationIds.isEmpty() || selectedApplicationIds.size() > 2) {
             throw new IllegalStateException("You must select one or two applicants");
         }

@@ -13,5 +13,6 @@ public interface ApplicationMapper {
     @Mapping(target = "jobStatus", source = "job.status")
     @Mapping(target = "artistId", source = "artist.id")
     @Mapping(target = "artistName", source = "artist.fullName")
+    @Mapping(target = "portfolioUrl", source = "portfolioUrl")
     ApplicationResponse toResponse(Application application);
 }
