@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -105,5 +106,41 @@ public class MessageService {
         message.setRead(true);
 
         messageRepository.save(message);
+    }
+    @Transactional(readOnly = true)
+    public List<MessageResponse> getConversation(String userEmail, String otherUserId) {
+        User currentUser = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"
+                ));
+
+        User otherUser = userRepository.findById(otherUserId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Other user not found"
+                ));
+
+        return messageRepository.findConversationBetweenUsers(currentUser, otherUser)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Helper method to map Message to MessageResponse (if you don't have it)
+    private MessageResponse mapToResponse(Message message) {
+        return MessageResponse.builder()
+                .id(message.getId())
+                .senderId(message.getSender().getId())
+                .senderName(message.getSender().getFullName())
+                .senderEmail(message.getSender().getEmail())
+                .receiverId(message.getReceiver().getId())
+                .receiverName(message.getReceiver().getFullName())
+                .receiverEmail(message.getReceiver().getEmail())
+                .content(message.getContent())
+                .attachmentUrl(message.getAttachmentUrl())
+                .isRead(message.isRead())
+                .sentAt(message.getSentAt())
+                .build();
     }
 }

@@ -14,7 +14,7 @@ public interface ArtistProfileMapper {
 
     // 1. Merges User and ArtistProfile into one flat response
     @Mapping(source = "user.id", target = "artistId")
-    @Mapping(source = "user.username", target = "name")
+    @Mapping(source = "user.fullName", target = "name")
     @Mapping(source = "user.email", target = "email")
     @Mapping(source = "profile.bio", target = "bio")
     @Mapping(source = "profile.headline", target = "headline")

@@ -112,6 +112,7 @@ public class User implements UserDetails {
         failedLoginAttempts = 0;
     }
 
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
@@ -128,6 +129,7 @@ public class User implements UserDetails {
     public String getPassword() {
         return password;
     }
+
 
     @Override
     public String getUsername() {

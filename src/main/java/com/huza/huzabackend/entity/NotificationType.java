@@ -4,5 +4,6 @@ public enum NotificationType {
     MESSAGE,
     APPLICATION,
     REVIEW,
-    SYSTEM
+    SYSTEM,
+    CONTRACT
 }
