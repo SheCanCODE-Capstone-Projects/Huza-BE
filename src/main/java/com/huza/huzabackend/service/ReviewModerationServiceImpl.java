@@ -21,7 +21,7 @@ public class ReviewModerationServiceImpl implements ReviewModerationService {
     @Override
     @Transactional(readOnly = true)
     public List<ReviewResponse> getPendingReviews() {
-        return reviewRepository.findAllByStatusWithDetails(Review.ReviewStatus.PENDING).stream()
+        return reviewRepository.findAllByModerationStatusWithDetails(Review.ModerationStatus.PENDING).stream()
                 .map(reviewMapper::toResponse)
                 .toList();
     }
@@ -30,11 +30,11 @@ public class ReviewModerationServiceImpl implements ReviewModerationService {
     @Transactional
     public ReviewResponse approveReview(Long reviewId) {
         Review review = findReview(reviewId);
-        if (review.getStatus() != Review.ReviewStatus.PENDING) {
+        if (review.getModerationStatus() != Review.ModerationStatus.PENDING) {
             throw new IllegalStateException("Only pending reviews can be approved");
         }
 
-        review.setStatus(Review.ReviewStatus.APPROVED);
+        review.setModerationStatus(Review.ModerationStatus.APPROVED);
         return reviewMapper.toResponse(reviewRepository.save(review));
     }
 

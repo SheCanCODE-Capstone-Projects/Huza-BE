@@ -9,11 +9,12 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ReviewMapper {
 
-    @Mapping(source = "job.jobId", target = "jobId")
-    @Mapping(source = "job.title", target = "jobTitle")
-    @Mapping(source = "recruiter.user.id", target = "recruiterUserId")
-    @Mapping(source = "recruiter.user.fullName", target = "recruiterName")
-    @Mapping(source = "artist.id", target = "artistId")
-    @Mapping(source = "artist.user.fullName", target = "artistName")
+    @Mapping(source = "reviewer.id", target = "reviewerId")
+    @Mapping(source = "reviewer.fullName", target = "reviewerName")
+    @Mapping(source = "reviewedUser.id", target = "reviewedUserId")
+    @Mapping(source = "reviewedUser.fullName", target = "reviewedUserName")
+    @Mapping(source = "consent.consentId", target = "consentId")
+    @Mapping(source = "consent.application.job.jobId", target = "jobId")
+    @Mapping(source = "consent.application.job.title", target = "jobTitle")
     ReviewResponse toResponse(Review review);
 }

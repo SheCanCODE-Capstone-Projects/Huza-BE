@@ -20,15 +20,15 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recruiter/reviews")
+@RequestMapping("/api/reviews")
 @RequiredArgsConstructor
-@Tag(name = "Recruiter Reviews", description = "Recruiters submit reviews for artists after a job is completed")
+@Tag(name = "Reviews", description = "Recruiter reviews of artists after an approved consent and completed job")
 public class ReviewController {
 
     private final ReviewService reviewService;
 
     @PostMapping
-    @Operation(summary = "Submit a review for an artist after the job is completed")
+    @Operation(summary = "Submit a review linked to an approved consent")
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
             @Valid @RequestBody CreateReviewRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(

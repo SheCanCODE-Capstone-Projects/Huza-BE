@@ -9,6 +9,10 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/**
+ * ERD: REVIEW — written after a completed job, linked 1:1 to CONSENT.
+ * Extra moderationStatus supports admin approve/reject before the review is visible.
+ */
 @Entity
 @Table(name = "reviews")
 @Getter
@@ -24,16 +28,16 @@ public class Review {
     private Long reviewId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_id", nullable = false)
-    private Job job;
+    @JoinColumn(name = "reviewer_id", nullable = false)
+    private User reviewer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recruiter_id", nullable = false)
-    private RecruiterProfile recruiter;
+    @JoinColumn(name = "reviewed_user_id", nullable = false)
+    private User reviewedUser;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "artist_id", nullable = false)
-    private ArtistProfile artist;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "consent_id", nullable = false, unique = true)
+    private Consent consent;
 
     @Column(nullable = false)
     private Integer rating;
@@ -41,29 +45,26 @@ public class Review {
     @Column(columnDefinition = "TEXT")
     private String comment;
 
+    @Column(name = "review_date", nullable = false)
+    private LocalDateTime reviewDate;
+
+    /** Admin moderation gate — not on ERD but required for review moderation APIs. */
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(nullable = false)
-    private ReviewStatus status = ReviewStatus.PENDING;
+    @Column(name = "moderation_status", nullable = false)
+    private ModerationStatus moderationStatus = ModerationStatus.PENDING;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    public enum ModerationStatus {
+        PENDING, APPROVED, REJECTED
+    }
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public enum ReviewStatus {
-        PENDING, APPROVED, REJECTED
+        if (this.reviewDate == null) {
+            this.reviewDate = LocalDateTime.now();
+        }
+        if (this.moderationStatus == null) {
+            this.moderationStatus = ModerationStatus.PENDING;
+        }
     }
 }

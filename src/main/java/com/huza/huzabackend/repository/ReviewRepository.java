@@ -11,27 +11,34 @@ import java.util.Optional;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT r FROM Review r " +
-            "JOIN FETCH r.job j " +
-            "JOIN FETCH r.recruiter rec JOIN FETCH rec.user " +
-            "JOIN FETCH r.artist a JOIN FETCH a.user " +
+            "JOIN FETCH r.reviewer " +
+            "JOIN FETCH r.reviewedUser " +
+            "JOIN FETCH r.consent c " +
+            "JOIN FETCH c.application a " +
+            "JOIN FETCH a.job " +
             "WHERE r.reviewId = :reviewId")
     Optional<Review> findByIdWithDetails(@Param("reviewId") Long reviewId);
 
     @Query("SELECT r FROM Review r " +
-            "JOIN FETCH r.job j " +
-            "JOIN FETCH r.recruiter rec JOIN FETCH rec.user " +
-            "JOIN FETCH r.artist a JOIN FETCH a.user " +
-            "WHERE r.status = :status ORDER BY r.createdAt DESC")
-    List<Review> findAllByStatusWithDetails(@Param("status") Review.ReviewStatus status);
+            "JOIN FETCH r.reviewer " +
+            "JOIN FETCH r.reviewedUser " +
+            "JOIN FETCH r.consent c " +
+            "JOIN FETCH c.application a " +
+            "JOIN FETCH a.job " +
+            "WHERE r.moderationStatus = :status ORDER BY r.reviewDate DESC")
+    List<Review> findAllByModerationStatusWithDetails(@Param("status") Review.ModerationStatus status);
 
     @Query("SELECT r FROM Review r " +
-            "JOIN FETCH r.job j " +
-            "JOIN FETCH r.recruiter rec JOIN FETCH rec.user " +
-            "JOIN FETCH r.artist a JOIN FETCH a.user " +
-            "WHERE a.id = :artistId AND r.status = :status ORDER BY r.createdAt DESC")
-    List<Review> findAllByArtistIdAndStatusWithDetails(
-            @Param("artistId") String artistId,
-            @Param("status") Review.ReviewStatus status);
+            "JOIN FETCH r.reviewer " +
+            "JOIN FETCH r.reviewedUser " +
+            "JOIN FETCH r.consent c " +
+            "JOIN FETCH c.application a " +
+            "JOIN FETCH a.job " +
+            "WHERE r.reviewedUser.id = :reviewedUserId AND r.moderationStatus = :status " +
+            "ORDER BY r.reviewDate DESC")
+    List<Review> findAllByReviewedUserIdAndModerationStatusWithDetails(
+            @Param("reviewedUserId") String reviewedUserId,
+            @Param("status") Review.ModerationStatus status);
 
-    boolean existsByJob_JobIdAndRecruiter_RecruiterId(Long jobId, Long recruiterId);
+    boolean existsByConsent_ConsentId(Long consentId);
 }

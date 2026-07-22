@@ -1,6 +1,8 @@
 package com.huza.huzabackend.service;
 
+import com.huza.huzabackend.Mapper.ApplicationMapper;
 import com.huza.huzabackend.dto.ApplicationRequest;
+import com.huza.huzabackend.dto.ApplicationResponse;
 import com.huza.huzabackend.entity.Application;
 import com.huza.huzabackend.entity.ApplicationStatus;
 import com.huza.huzabackend.entity.Job;
@@ -15,7 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -25,9 +29,10 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
+    private final ApplicationMapper applicationMapper;
 
     @Transactional
-    public Application applyForJob(String artistId, ApplicationRequest request) {
+    public ApplicationResponse applyForJob(String artistId, ApplicationRequest request) {
         log.info("Artist {} applying for job {}", artistId, request.getJobId());
 
         User artist = userRepository.findById(artistId)
@@ -52,7 +57,7 @@ public class ApplicationService {
         Application savedApplication = applicationRepository.save(application);
         log.info("Application created successfully with ID: {}", savedApplication.getId());
 
-        return savedApplication;
+        return applicationMapper.toResponse(savedApplication);
     }
 
     @Transactional
@@ -69,24 +74,95 @@ public class ApplicationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Application> getApplicationHistory(String artistId) {
+    public List<ApplicationResponse> getApplicationHistory(String artistId) {
         log.info("Fetching application history for artist: {}", artistId);
-        return applicationRepository.findByArtistIdOrderByAppliedAtDesc(artistId);
+        return applicationRepository.findByArtistIdOrderByAppliedAtDesc(artistId).stream()
+                .map(applicationMapper::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public ApplicationStatus getApplicationStatus(String applicationId) {
+    public ApplicationResponse getApplicationStatus(String applicationId, String artistId) {
         log.info("Fetching status for application: {}", applicationId);
-
-        Application application = applicationRepository.findById(applicationId)
+        Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
-
-        return application.getStatus();
+        return applicationMapper.toResponse(application);
     }
 
     @Transactional(readOnly = true)
-    public Application getApplicationById(String applicationId) {
-        return applicationRepository.findById(applicationId)
+    public ApplicationResponse getApplicationById(String applicationId, String artistId) {
+        Application application = applicationRepository.findByIdAndArtistId(applicationId, artistId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
+        return applicationMapper.toResponse(application);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApplicationResponse> getApplicantsForJob(Long jobId, String recruiterUserId) {
+        Job job = jobRepository.findByIdWithDetails(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + jobId));
+        validateRecruiterOwnsJob(job, recruiterUserId);
+        return applicationRepository.findAllByJobIdWithDetails(jobId).stream()
+                .map(applicationMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public List<ApplicationResponse> assignJobToApplicants(Long jobId, String recruiterUserId, List<String> selectedApplicationIds) {
+        if (selectedApplicationIds == null || selectedApplicationIds.isEmpty() || selectedApplicationIds.size() > 2) {
+            throw new IllegalStateException("You must select one or two applicants");
+        }
+
+        Set<String> uniqueSelected = new HashSet<>(selectedApplicationIds);
+        if (uniqueSelected.size() != selectedApplicationIds.size()) {
+            throw new IllegalStateException("Duplicate application IDs are not allowed");
+        }
+
+        Job job = jobRepository.findByIdWithDetails(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + jobId));
+        validateRecruiterOwnsJob(job, recruiterUserId);
+
+        if (job.getStatus() != Job.JobStatus.OPEN) {
+            throw new IllegalStateException("Only OPEN jobs can be assigned");
+        }
+
+        List<Application> applications = applicationRepository.findAllByJobIdWithDetails(jobId);
+        if (applications.isEmpty()) {
+            throw new IllegalStateException("No applicants found for this job");
+        }
+
+        List<Application> pendingApplications = applications.stream()
+                .filter(a -> a.getStatus() == ApplicationStatus.PENDING)
+                .toList();
+        if (pendingApplications.isEmpty()) {
+            throw new IllegalStateException("No pending applicants available for assignment");
+        }
+
+        Set<String> pendingIds = pendingApplications.stream().map(Application::getId).collect(java.util.stream.Collectors.toSet());
+        if (!pendingIds.containsAll(uniqueSelected)) {
+            throw new IllegalStateException("Selected applicants must belong to this job and be in PENDING status");
+        }
+
+        for (Application application : pendingApplications) {
+            if (uniqueSelected.contains(application.getId())) {
+                application.accept(recruiterUserId);
+            } else {
+                application.reject(recruiterUserId);
+            }
+        }
+
+        applicationRepository.saveAll(pendingApplications);
+        job.setStatus(Job.JobStatus.CLOSED);
+        jobRepository.save(job);
+
+        return pendingApplications.stream()
+                .filter(a -> a.getStatus() == ApplicationStatus.ACCEPTED)
+                .map(applicationMapper::toResponse)
+                .toList();
+    }
+
+    private void validateRecruiterOwnsJob(Job job, String recruiterUserId) {
+        if (!job.getRecruiter().getUser().getId().equals(recruiterUserId)) {
+            throw new IllegalStateException("You can only manage applications for your own jobs");
+        }
     }
 }

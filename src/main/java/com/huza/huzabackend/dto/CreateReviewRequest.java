@@ -10,13 +10,10 @@ import lombok.Data;
 public class CreateReviewRequest {
 
     @NotBlank
-    private String recruiterUserId;
+    private String reviewerId;
 
     @NotNull
-    private Long jobId;
-
-    @NotBlank
-    private String artistId;
+    private Long consentId;
 
     @NotNull
     @Min(1)

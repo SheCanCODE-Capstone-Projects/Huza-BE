@@ -9,15 +9,15 @@ import java.time.LocalDateTime;
 @Builder
 public class ReviewResponse {
     private Long reviewId;
+    private String reviewerId;
+    private String reviewerName;
+    private String reviewedUserId;
+    private String reviewedUserName;
+    private Long consentId;
     private Long jobId;
     private String jobTitle;
-    private String recruiterUserId;
-    private String recruiterName;
-    private String artistId;
-    private String artistName;
     private Integer rating;
     private String comment;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime reviewDate;
+    private String moderationStatus;
 }
