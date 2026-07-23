@@ -16,4 +16,6 @@ public interface CalendarRepository extends JpaRepository<Calendar, String> {
     Optional<Calendar> findByArtistIdAndDate(String artistId, LocalDate date);
     
     List<Calendar> findByArtistIdOrderByDateAsc(String artistId);
+
+    Optional<Calendar> findByArtistIdAndApplicationId(String artistId, String applicationId);
 }

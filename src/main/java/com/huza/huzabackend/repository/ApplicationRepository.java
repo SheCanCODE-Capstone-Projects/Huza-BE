@@ -35,6 +35,13 @@ public interface ApplicationRepository extends JpaRepository<Application, String
             "JOIN FETCH a.job j " +
             "JOIN FETCH j.recruiter r JOIN FETCH r.user " +
             "JOIN FETCH a.artist " +
+            "WHERE a.artist.id = :artistId AND a.status = :status ORDER BY a.appliedAt DESC")
+    List<Application> findByArtistIdAndStatusWithDetails(@Param("artistId") String artistId, @Param("status") ApplicationStatus status);
+
+    @Query("SELECT a FROM Application a " +
+            "JOIN FETCH a.job j " +
+            "JOIN FETCH j.recruiter r JOIN FETCH r.user " +
+            "JOIN FETCH a.artist " +
             "WHERE j.jobId = :jobId ORDER BY a.appliedAt DESC")
     List<Application> findAllByJobIdWithDetails(@Param("jobId") Long jobId);
 
