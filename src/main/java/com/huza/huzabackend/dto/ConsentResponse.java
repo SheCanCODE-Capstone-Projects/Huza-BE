@@ -1,22 +1,28 @@
 package com.huza.huzabackend.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConsentResponse {
     private String id;
-    private String jobId;  // Changed from Long to String since Job uses String ID
+    private String jobId;
     private String jobTitle;
     private String recruiterId;
     private String recruiterName;
     private String artistId;
     private String artistName;
     private String artistEmail;
+    private String adminId;
+    private String adminName;
     private BigDecimal agreedSalary;
     private LocalDateTime startDate;
     private LocalDateTime endDate;

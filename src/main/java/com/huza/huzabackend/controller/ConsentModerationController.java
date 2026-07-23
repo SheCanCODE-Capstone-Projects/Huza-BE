@@ -24,7 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/moderation/consents")
 @RequiredArgsConstructor
-@Tag(name = "Consent Management", description = "Approve, reject, and archive employment consents/contracts")
+@Tag(name = "Consent Management", description = "Approve, reject, and archive employment consents/contracts by Admin")
 public class ConsentModerationController {
 
     private final ConsentService consentService;
@@ -45,21 +45,21 @@ public class ConsentModerationController {
     }
 
     @PatchMapping("/{consentId}/approve")
-    @Operation(summary = "Approve an employment consent")
+    @Operation(summary = "Approve an employment consent by Admin")
     public ResponseEntity<ApiResponse<ConsentResponse>> approveConsent(
             @PathVariable Long consentId,
-            @RequestParam(required = false) String managerId) {
+            @RequestParam(required = false) String adminId) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Consent approved", consentService.approveConsent(consentId, managerId)));
+                "Consent approved", consentService.approveConsent(consentId, adminId)));
     }
 
     @PatchMapping("/{consentId}/reject")
-    @Operation(summary = "Reject a consent")
+    @Operation(summary = "Reject a consent by Admin")
     public ResponseEntity<ApiResponse<ConsentResponse>> rejectConsent(
             @PathVariable Long consentId,
-            @RequestParam(required = false) String managerId) {
+            @RequestParam(required = false) String adminId) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Consent rejected", consentService.rejectConsent(consentId, managerId)));
+                "Consent rejected", consentService.rejectConsent(consentId, adminId)));
     }
 
     @PatchMapping("/{consentId}/archive")

@@ -16,6 +16,6 @@ public interface ConsentMapper {
     @Mapping(source = "artist.id", target = "artistId")
     @Mapping(source = "artist.fullName", target = "artistName")
     @Mapping(source = "artist.email", target = "artistEmail")
+    @Mapping(source = "approvedBy", target = "adminId")
     ConsentResponse toResponse(Consent consent);
 }
-

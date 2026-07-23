@@ -215,28 +215,28 @@ public class ConsentServiceImpl implements ConsentService {
 
     @Override
     @Transactional
-    public ConsentResponse approveConsent(Long consentId, String managerId) {
+    public ConsentResponse approveConsent(Long consentId, String adminId) {
         Consent consent = findConsent(String.valueOf(consentId));
         if (consent.getApprovalStatus() != ApprovalStatus.PENDING) {
             throw new IllegalStateException("Only pending consents can be approved");
         }
 
         consent.setApprovalStatus(ApprovalStatus.APPROVED);
-        consent.setApprovedBy(managerId);
+        consent.setApprovedBy(adminId);
         consent.setApprovedAt(LocalDateTime.now());
         return consentMapper.toResponse(consentRepository.save(consent));
     }
 
     @Override
     @Transactional
-    public ConsentResponse rejectConsent(Long consentId, String managerId) {
+    public ConsentResponse rejectConsent(Long consentId, String adminId) {
         Consent consent = findConsent(String.valueOf(consentId));
         if (consent.getApprovalStatus() != ApprovalStatus.PENDING) {
             throw new IllegalStateException("Only pending consents can be rejected");
         }
 
         consent.setApprovalStatus(ApprovalStatus.REJECTED);
-        consent.setApprovedBy(managerId);
+        consent.setApprovedBy(adminId);
         consent.setApprovedAt(LocalDateTime.now());
         return consentMapper.toResponse(consentRepository.save(consent));
     }

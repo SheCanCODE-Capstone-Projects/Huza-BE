@@ -14,7 +14,7 @@ public interface ConsentService {
     List<ConsentResponse> getConsentsByRecruiter(String email);
     List<ConsentResponse> getConsentsByArtist(String email);
     List<ConsentResponse> getPendingConsents();
-    ConsentResponse approveConsent(Long consentId, String managerId);
-    ConsentResponse rejectConsent(Long consentId, String managerId);
+    ConsentResponse approveConsent(Long consentId, String adminId);
+    ConsentResponse rejectConsent(Long consentId, String adminId);
     ConsentResponse archiveConsent(Long consentId);
 }
