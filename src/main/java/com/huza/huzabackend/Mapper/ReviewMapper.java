@@ -11,10 +11,10 @@ public interface ReviewMapper {
 
     @Mapping(source = "reviewer.id", target = "reviewerId")
     @Mapping(source = "reviewer.fullName", target = "reviewerName")
+    @Mapping(source = "reviewer.email", target = "reviewerEmail")
     @Mapping(source = "reviewedUser.id", target = "reviewedUserId")
     @Mapping(source = "reviewedUser.fullName", target = "reviewedUserName")
-    @Mapping(source = "consent.consentId", target = "consentId")
-    @Mapping(source = "consent.application.job.jobId", target = "jobId")
-    @Mapping(source = "consent.application.job.title", target = "jobTitle")
+    @Mapping(source = "reviewedUser.email", target = "reviewedUserEmail")
     ReviewResponse toResponse(Review review);
 }
+

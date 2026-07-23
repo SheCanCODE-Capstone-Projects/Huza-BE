@@ -9,12 +9,13 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ConsentMapper {
 
-    @Mapping(source = "application.id", target = "applicationId")
-    @Mapping(source = "application.job.jobId", target = "jobId")
-    @Mapping(source = "application.job.title", target = "jobTitle")
-    @Mapping(source = "application.artist.id", target = "artistId")
-    @Mapping(source = "application.artist.fullName", target = "artistName")
-    @Mapping(source = "manager.id", target = "managerId")
-    @Mapping(source = "manager.fullName", target = "managerName")
+    @Mapping(source = "job.jobId", target = "jobId")
+    @Mapping(source = "job.title", target = "jobTitle")
+    @Mapping(source = "recruiter.id", target = "recruiterId")
+    @Mapping(source = "recruiter.fullName", target = "recruiterName")
+    @Mapping(source = "artist.id", target = "artistId")
+    @Mapping(source = "artist.fullName", target = "artistName")
+    @Mapping(source = "artist.email", target = "artistEmail")
     ConsentResponse toResponse(Consent consent);
 }
+

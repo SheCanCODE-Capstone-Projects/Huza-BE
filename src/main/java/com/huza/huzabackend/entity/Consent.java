@@ -1,12 +1,11 @@
 package com.huza.huzabackend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,41 +18,58 @@ import java.time.LocalDateTime;
 public class Consent {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "consent_id")
-    private Long consentId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "application_id", nullable = false, unique = true)
-    private Application application;
-
-    /** Manager who reviews/approves the consent (User with manager/admin role). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manager_id")
-    private User manager;
+    @JoinColumn(name = "job_id", nullable = false)
+    private Job job;
 
-    @Column(name = "payment_duration")
-    private String paymentDuration;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recruiter_id", nullable = false)
+    private User recruiter;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "artist_id", nullable = false)
+    private User artist;
+
+    @Column(nullable = false)
+    private BigDecimal agreedSalary;
+
+    @Column(nullable = false)
+    private LocalDateTime startDate;
+
+    private LocalDateTime endDate;
 
     @Column(columnDefinition = "TEXT")
     private String terms;
 
+    @Column(columnDefinition = "TEXT")
+    private String specialConditions;
+
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    @Column(name = "approval_status", nullable = false)
-    private ConsentApprovalStatus approvalStatus = ConsentApprovalStatus.PENDING;
+    private ApprovalStatus approvalStatus;  // PENDING, APPROVED, REJECTED
 
-    @Column(name = "approved_at")
-    private LocalDateTime approvedAt;
+    @Enumerated(EnumType.STRING)
+    private ConsentStatus status;  // DRAFT, SENT, SIGNED_BY_ARTIST, etc.
 
-    @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    private String approvedBy;  // Manager who approved
+
+    private LocalDateTime approvedAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.approvalStatus == null) {
-            this.approvalStatus = ConsentApprovalStatus.PENDING;
+        if (approvalStatus == null) {
+            approvalStatus = ApprovalStatus.PENDING;
+        }
+        if (status == null) {
+            status = ConsentStatus.DRAFT;
         }
     }
 }

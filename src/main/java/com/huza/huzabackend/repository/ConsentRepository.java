@@ -1,33 +1,29 @@
 package com.huza.huzabackend.repository;
 
+import com.huza.huzabackend.entity.ApprovalStatus;
 import com.huza.huzabackend.entity.Consent;
-import com.huza.huzabackend.entity.ConsentApprovalStatus;
+import com.huza.huzabackend.entity.Job;
+import com.huza.huzabackend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface ConsentRepository extends JpaRepository<Consent, Long> {
+@Repository
+public interface ConsentRepository extends JpaRepository<Consent, String> {
 
-    @Query("SELECT c FROM Consent c " +
-            "JOIN FETCH c.application a " +
-            "JOIN FETCH a.job j " +
-            "JOIN FETCH j.recruiter rec JOIN FETCH rec.user " +
-            "JOIN FETCH a.artist " +
-            "LEFT JOIN FETCH c.manager " +
-            "WHERE c.consentId = :consentId")
-    Optional<Consent> findByIdWithDetails(@Param("consentId") Long consentId);
+    List<Consent> findByRecruiter(User recruiter);
 
-    @Query("SELECT c FROM Consent c " +
-            "JOIN FETCH c.application a " +
-            "JOIN FETCH a.job j " +
-            "JOIN FETCH j.recruiter rec JOIN FETCH rec.user " +
-            "JOIN FETCH a.artist " +
-            "LEFT JOIN FETCH c.manager " +
-            "WHERE c.approvalStatus = :status ORDER BY c.createdAt DESC")
-    List<Consent> findAllByApprovalStatusWithDetails(@Param("status") ConsentApprovalStatus status);
+    List<Consent> findByArtist(User artist);
 
-    boolean existsByApplication_Id(String applicationId);
+    List<Consent> findByJob(Job job);
+
+    Optional<Consent> findByJobAndArtist(Job job, User artist);
+
+    List<Consent> findByRecruiterAndApprovalStatus(User recruiter, ApprovalStatus approvalStatus);
+
+    List<Consent> findByArtistAndApprovalStatus(User artist, ApprovalStatus approvalStatus);
+
+    boolean existsByJobAndArtistAndApprovalStatus(Job job, User artist, ApprovalStatus approvalStatus);
 }

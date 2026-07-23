@@ -1,38 +1,40 @@
 package com.huza.huzabackend.entity;
-
+//import com.huza.huzabackend.entity.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "notifications")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Review {
+public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewer_id", nullable = false)
-    private User reviewer;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewed_user_id", nullable = false)
-    private User reviewedUser;
+    @JoinColumn(name = "user_id", nullable =false)
+    private User user;
 
     @Column(nullable = false)
-    private Integer rating;
+    private String title;
 
-    @Column(length = 2000)
-    private String comment;
+    @Column(nullable = false, length = 1000)
+    private String message;
 
-    private String consentId;
+    private String link;
+
+    @Enumerated(EnumType.STRING)
+    private NotificationType type;
+
+    @Column(name = "is_read")
+    private boolean isRead;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -40,5 +42,6 @@ public class Review {
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();
+        isRead = false;
     }
 }

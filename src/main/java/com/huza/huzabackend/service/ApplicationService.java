@@ -9,6 +9,7 @@ import com.huza.huzabackend.entity.Job;
 import com.huza.huzabackend.entity.User;
 import com.huza.huzabackend.exception.DuplicateResourceException;
 import com.huza.huzabackend.exception.ResourceNotFoundException;
+import com.huza.huzabackend.entity.NotificationType;
 import com.huza.huzabackend.repository.ApplicationRepository;
 import com.huza.huzabackend.repository.JobRepository;
 import com.huza.huzabackend.repository.UserRepository;
@@ -30,6 +31,7 @@ public class ApplicationService {
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
     private final ApplicationMapper applicationMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     public ApplicationResponse applyForJob(String artistId, ApplicationRequest request) {
@@ -170,8 +172,26 @@ public class ApplicationService {
         for (Application application : pendingApplications) {
             if (uniqueSelected.contains(application.getId())) {
                 application.accept(recruiterUserId);
+                if (application.getArtist() != null && application.getArtist().getId() != null) {
+                    notificationService.notify(
+                            application.getArtist().getId(),
+                            "Job Assigned!",
+                            "Congratulations! You have been assigned the job: " + job.getTitle(),
+                            "/applications/" + application.getId(),
+                            NotificationType.APPLICATION
+                    );
+                }
             } else {
                 application.reject(recruiterUserId);
+                if (application.getArtist() != null && application.getArtist().getId() != null) {
+                    notificationService.notify(
+                            application.getArtist().getId(),
+                            "Application Update",
+                            "Your application for job: " + job.getTitle() + " was not selected.",
+                            "/applications/" + application.getId(),
+                            NotificationType.APPLICATION
+                    );
+                }
             }
         }
 
