@@ -91,7 +91,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = Review.builder()
                 .reviewer(reviewer)
                 .reviewedUser(reviewedUser)
-                .consentId(consent.getId())
+                .consent(consent)
                 .rating(request.getRating())
                 .comment(request.getComment())
                 .build();

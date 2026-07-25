@@ -32,7 +32,10 @@ public class Review {
     @Column(length = 2000)
     private String comment;
 
-    private String consentId;
+    // Proper JPA relationship mapping
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "consent_id")
+    private Consent consent;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
