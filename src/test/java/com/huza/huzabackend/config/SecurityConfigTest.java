@@ -56,6 +56,15 @@ class SecurityConfigTest {
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockBean
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
+    @MockBean
+    private OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+
+    @MockBean
+    private CustomOAuth2UserService customOAuth2UserService;
+
     @Test
     void registerEndpointShouldBeAccessibleWithoutAuthentication() throws Exception {
         when(userService.registerUser(any(RegisterRequest.class)))
