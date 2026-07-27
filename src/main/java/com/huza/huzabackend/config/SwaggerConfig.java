@@ -5,9 +5,6 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.security.OAuthFlow;
-import io.swagger.v3.oas.models.security.OAuthFlows;
-import io.swagger.v3.oas.models.security.Scopes;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
@@ -28,25 +25,10 @@ public class SwaggerConfig {
                 .bearerFormat("JWT")
                 .description("Paste the JWT received after authentication or Google OAuth2 login here.");
 
-        Scopes scopes = new Scopes()
-                .addString("openid", "OpenID identifier")
-                .addString("email", "Access to your email address")
-                .addString("profile", "Access to your profile information");
-
-        SecurityScheme googleOAuthScheme = new SecurityScheme()
-                .type(SecurityScheme.Type.OAUTH2)
-                .description("Sign in with your Google account")
-                .flows(new OAuthFlows()
-                        .implicit(new OAuthFlow()
-                                .authorizationUrl("https://accounts.google.com/o/oauth2/v2/auth")
-                                .scopes(scopes)));
-
         return new OpenAPI()
                 .components(new Components()
-                        .addSecuritySchemes("bearerAuth", bearerScheme)
-                        .addSecuritySchemes("google_oauth2", googleOAuthScheme))
+                        .addSecuritySchemes("bearerAuth", bearerScheme))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
-                .addSecurityItem(new SecurityRequirement().addList("google_oauth2", List.of("openid", "email", "profile")))
                 .info(new Info()
                         .title("Huza Authentication Service API")
                         .version("1.0.0")
