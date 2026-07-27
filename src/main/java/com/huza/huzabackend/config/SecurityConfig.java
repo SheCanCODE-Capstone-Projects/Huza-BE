@@ -9,7 +9,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -24,56 +23,50 @@ public class SecurityConfig {
 
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final AuthenticationSuccessHandler authenticationSuccessHandler;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
-    // Constructor injection for your authentication components
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             AuthenticationProvider authenticationProvider,
-            AuthenticationSuccessHandler authenticationSuccessHandler
+            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+            OAuth2LoginFailureHandler oAuth2LoginFailureHandler,
+            CustomOAuth2UserService customOAuth2UserService
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.authenticationProvider = authenticationProvider;
-        this.authenticationSuccessHandler = authenticationSuccessHandler;
+        this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+        this.oAuth2LoginFailureHandler = oAuth2LoginFailureHandler;
+        this.customOAuth2UserService = customOAuth2UserService;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Explicitly enable CORS configuration handling
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // 2. Team settings: Disable standard session/login features
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
 
-                // 3. Session state management
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 4. Role-based authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // Public Auth, H2 Console, and Swagger Endpoints
                         .requestMatchers("/auth/**", "/api/auth/**", "/login", "/oauth2/**", "/login/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs").permitAll()
 
-                        // Public Read-Only Endpoints
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/skills/**").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/recruiter/jobs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/artist/profile/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/artist/portfolio/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/recruiter/profile/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/artist/reviews/**").permitAll()
 
-                        // Moderation & Admin Endpoints
                         .requestMatchers("/api/moderation/**", "/api/admin/**").hasAnyRole("ADMIN", "MODERATOR")
-
-                        // Role-Specific Endpoint Protection
                         .requestMatchers("/api/recruiter/**").hasAnyRole("RECRUITER", "ADMIN")
                         .requestMatchers("/api/artist/**").hasAnyRole("ARTIST", "ADMIN")
                         .requestMatchers("/api/messages/**").hasAnyRole("ARTIST", "RECRUITER", "ADMIN")
@@ -82,23 +75,21 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .redirectionEndpoint(redirection -> redirection.baseUri("/login/code/*"))
-                        .successHandler(authenticationSuccessHandler)
-                        .failureUrl("/swagger-ui.html")
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler(oAuth2LoginFailureHandler)
                 )
 
-                // 5. Your custom authentication & JWT filters
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // 5. CORS configuration (crucial for local frontend-backend communication)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Adjust or add ports your teammates use (e.g., 3000, 5173, etc.)
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:*",
                 "http://127.0.0.1:*"
