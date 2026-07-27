@@ -31,7 +31,7 @@ public class PortfolioController {
      */
     @PostMapping
     @Operation(summary = "Create portfolio item")
-    @PreAuthorize("hasAnyRole('ADMIN', 'JOB_SEEKER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ARTIST')")
     public ResponseEntity<ApiResponse<PortfolioResponse>> createPortfolio(
             @RequestParam String artistId,
             @Valid @RequestBody PortfolioRequest request) {
@@ -78,7 +78,7 @@ public class PortfolioController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "Update portfolio item")
-    @PreAuthorize("hasAnyRole('ADMIN', 'JOB_SEEKER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ARTIST')")
     public ResponseEntity<ApiResponse<PortfolioResponse>> updatePortfolio(
             @PathVariable String id,
             @RequestParam String artistId,
@@ -103,7 +103,7 @@ public class PortfolioController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete portfolio item")
-    @PreAuthorize("hasAnyRole('ADMIN', 'JOB_SEEKER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ARTIST')")
     public ResponseEntity<ApiResponse<Void>> deletePortfolio(
             @PathVariable String id,
             @RequestParam String artistId) {

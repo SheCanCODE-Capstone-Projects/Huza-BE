@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,22 +21,26 @@ public class JobController {
     private final JobService jobService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
     public ResponseEntity<JobResponse> createJob(@Valid @RequestBody CreateJobRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(jobService.createJob(request));
     }
 
     @PutMapping("/{jobId}")
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
     public ResponseEntity<JobResponse> updateJob(@PathVariable Long jobId, @Valid @RequestBody UpdateJobRequest request) {
         return ResponseEntity.ok(jobService.updateJob(jobId, request));
     }
 
     @DeleteMapping("/{jobId}")
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
     public ResponseEntity<Void> deleteJob(@PathVariable Long jobId) {
         jobService.deleteJob(jobId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{jobId}/close")
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
     public ResponseEntity<JobResponse> closeJob(@PathVariable Long jobId) {
         return ResponseEntity.ok(jobService.closeJob(jobId));
     }

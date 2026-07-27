@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 @RequestMapping("/api/artist/applications")
 @RequiredArgsConstructor
 @Tag(name = "Applications", description = "Job application management endpoints for artists")
+@PreAuthorize("hasAnyRole('ARTIST', 'ADMIN')")
 public class ApplicationController {
 
     private final ApplicationService applicationService;

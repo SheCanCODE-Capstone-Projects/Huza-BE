@@ -5,6 +5,7 @@ import com.huza.huzabackend.dto.ConsentResponse;
 import com.huza.huzabackend.service.ConsentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/recruiter/contracts")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('RECRUITER', 'ARTIST', 'ADMIN')")
 public class ConsentController {
 
     private final ConsentService consentService;

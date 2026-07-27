@@ -52,8 +52,7 @@ public class User implements UserDetails {
     @Column(name = "profile_picture")
     private String profilePicture;
 
-    @Lob
-    @Column(name = "profile_picture_data")
+    @Column(name = "profile_picture_data", columnDefinition = "bytea")
     private byte[] profilePictureData;
 
     @Column(name = "profile_picture_content_type")

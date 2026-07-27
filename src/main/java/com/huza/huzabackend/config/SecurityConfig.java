@@ -2,7 +2,9 @@ package com.huza.huzabackend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,6 +19,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final AuthenticationProvider authenticationProvider;
@@ -47,30 +50,34 @@ public class SecurityConfig {
 
                 // 3. Session state management
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 4. Merged authorization rules
+                // 4. Role-based authorization rules
                 .authorizeHttpRequests(auth -> auth
+                        // Public Auth, H2 Console, and Swagger Endpoints
                         .requestMatchers("/auth/**", "/api/auth/**", "/login", "/oauth2/**", "/login/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs").permitAll()
-//                        .requestMatchers("/api/moderation/**").hasAnyRole("ADMIN", "MODERATOR")
 
-                        // ADD THIS LINE HERE to let your new endpoints bypass security for public viewing/testing:
-                        .requestMatchers("/api/artist/profile/**").permitAll()
-                        .requestMatchers("/api/artist/skills/**").permitAll()
-                        .requestMatchers("/api/skills/**").permitAll()
-//                        .requestMatchers("/api/moderation/**").hasAnyRole("ADMIN", "MODERATOR")   // rule A
-                        .requestMatchers("/api/**", "/api/admin/**", "/api/moderation/**","/api/artist/**").permitAll()  // rule B, contains /api/moderation/** again
-//                        .requestMatchers("/api/moderation/**").hasAnyRole("ADMIN", "MODERATOR")   // rule A
-                        .requestMatchers("/api/**", "/api/admin/**", "/api/moderation/**").permitAll()  // rule B, contains /api/moderation/** again
-//                                .requestMatchers("/api/**","/api/admin/**","/api/moderation/**").permitAll()
-                                .requestMatchers("/api/users/**").permitAll()
-                                .requestMatchers("/api/recruiter/profile/**").permitAll()
-//                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // Public Read-Only Endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/skills/**").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/recruiter/jobs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/artist/profile/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/artist/portfolio/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/recruiter/profile/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/artist/reviews/**").permitAll()
 
-//                        .requestMatchers("/api/users/**").authenticated()
+                        // Moderation & Admin Endpoints
+                        .requestMatchers("/api/moderation/**", "/api/admin/**").hasAnyRole("ADMIN", "MODERATOR")
+
+                        // Role-Specific Endpoint Protection
+                        .requestMatchers("/api/recruiter/**").hasAnyRole("RECRUITER", "ADMIN")
+                        .requestMatchers("/api/artist/**").hasAnyRole("ARTIST", "ADMIN")
+                        .requestMatchers("/api/messages/**").hasAnyRole("ARTIST", "RECRUITER", "ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

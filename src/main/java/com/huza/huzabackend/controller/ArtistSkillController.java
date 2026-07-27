@@ -6,6 +6,7 @@ import com.huza.huzabackend.service.ArtistSkillService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class ArtistSkillController {
 
     // POST /api/artist/profile/{artistId}/skills
     @PostMapping("/artist/profile/{artistId}/skills")
+    @PreAuthorize("hasAnyRole('ARTIST', 'ADMIN')")
     public ResponseEntity<?> assignSkill(
             @PathVariable String artistId,
             @Valid @RequestBody AssignSkillRequest request) {
@@ -38,6 +40,7 @@ public class ArtistSkillController {
 
     // DELETE /api/artist/skills/{artistSkillId}
     @DeleteMapping("/artist/skills/{artistSkillId}")
+    @PreAuthorize("hasAnyRole('ARTIST', 'ADMIN')")
     public ResponseEntity<String> removeSkill(@PathVariable Long artistSkillId) {
         try {
             artistSkillService.removeSkillFromArtist(artistSkillId);

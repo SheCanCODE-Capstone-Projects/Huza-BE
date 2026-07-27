@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +26,7 @@ public class RecruiterProfileController {
     }
 
     @PutMapping("/{userId}")
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
     public ResponseEntity<RecruiterProfileResponse> updateProfile(
             @PathVariable String userId,
             @Valid @RequestBody UpdateRecruiterProfileRequest request) {
@@ -33,6 +35,7 @@ public class RecruiterProfileController {
     }
 
     @PostMapping(value = "/{recruiterId}/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
     public ResponseEntity<RecruiterProfileResponse> uploadProfilePicture(
             @PathVariable String recruiterId,
             @RequestParam("file") MultipartFile file) {
@@ -40,11 +43,13 @@ public class RecruiterProfileController {
     }
 
     @DeleteMapping("/{recruiterId}/picture")
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
     public ResponseEntity<RecruiterProfileResponse> removeProfilePicture(@PathVariable String recruiterId) {
         return ResponseEntity.ok(recruiterProfileService.removeProfilePicture(recruiterId));
     }
 
     @PutMapping("/{recruiterId}/work")
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
     public ResponseEntity<RecruiterProfileResponse> updateWorkExperience(
             @PathVariable String recruiterId,
             @Valid @RequestBody WorkExperienceRequest request) {

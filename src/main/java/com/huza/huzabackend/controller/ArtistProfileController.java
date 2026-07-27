@@ -7,6 +7,7 @@ import com.huza.huzabackend.service.ArtistProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +26,7 @@ public ResponseEntity<ArtistProfileResponseDTO> getProfile(@PathVariable String 
     }
 
     @PutMapping("/{artistId}")
+    @PreAuthorize("hasAnyRole('ARTIST', 'ADMIN')")
     public ResponseEntity<ArtistProfileResponseDTO> updateProfile(
             @PathVariable String artistId,
             @Valid @RequestBody ArtistProfileUpdateRequest request) {
@@ -34,6 +36,7 @@ public ResponseEntity<ArtistProfileResponseDTO> getProfile(@PathVariable String 
     }
 
     @PostMapping(value = "/{artistId}/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ARTIST', 'ADMIN')")
     public ResponseEntity<ArtistProfileResponseDTO> uploadProfilePicture(
             @PathVariable String artistId,
             @RequestParam("file") MultipartFile file) {
@@ -43,6 +46,7 @@ public ResponseEntity<ArtistProfileResponseDTO> getProfile(@PathVariable String 
     }
 
     @DeleteMapping("/{artistId}/picture")
+    @PreAuthorize("hasAnyRole('ARTIST', 'ADMIN')")
     public ResponseEntity<ArtistProfileResponseDTO> deleteProfilePicture(@PathVariable String artistId) {
         ArtistProfileResponseDTO updatedProfile = artistProfileService.deleteProfilePicture(artistId.trim());
         return ResponseEntity.ok(updatedProfile);
