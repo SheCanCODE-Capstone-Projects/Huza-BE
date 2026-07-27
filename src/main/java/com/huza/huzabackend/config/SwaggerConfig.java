@@ -69,10 +69,7 @@ public class SwaggerConfig {
                                 .url("https://opensource.org/licenses/MIT")))
                 .servers(List.of(
                         new Server()
-                                .url("\"https://huza-be-production.up.railway.app")
-                                .description("Local Development Server"),
-                        new Server()
-                                .url("https://api.huza.com")
+                                .url("https://huza-be-production.up.railway.app")
                                 .description("Production Server")
                 ));
     }
