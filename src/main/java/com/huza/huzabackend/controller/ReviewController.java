@@ -1,0 +1,79 @@
+package com.huza.huzabackend.controller;
+
+
+import com.huza.huzabackend.dto.ApiResponse;
+import com.huza.huzabackend.dto.ReviewRequest;
+import com.huza.huzabackend.dto.ReviewResponse;
+import com.huza.huzabackend.service.ReviewService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+
+@RestController
+@RequestMapping("/api/artist/reviews")
+@RequiredArgsConstructor
+public class ReviewController {
+
+
+    private final ReviewService reviewService;
+
+
+
+    @GetMapping("/{reviewedUserId}")
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviews(
+            @PathVariable String reviewedUserId) {
+
+
+        List<ReviewResponse> reviews =
+                reviewService.getReviews(reviewedUserId);
+
+
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Reviews retrieved successfully",
+                        reviews
+                )
+        );
+    }
+
+
+
+
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ARTIST', 'RECRUITER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<ReviewResponse>> submitReview(
+            Authentication authentication,
+            @Valid @RequestBody ReviewRequest request) {
+
+
+        String reviewerEmail = authentication.getName();
+
+
+
+        ReviewResponse review =
+                reviewService.submitReview(
+                        reviewerEmail,
+                        request
+                );
+
+
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(
+                                "Review submitted successfully",
+                                review
+                        )
+                );
+    }
+
+}

@@ -1,33 +1,32 @@
 package com.huza.huzabackend.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+//    private final JavaMailSender mailSender;
+@Value("${BREVO_API_KEY}")
+private String brevoApiKey;
 
-    @Value("${spring.mail.username}")
+    @Value("${MAIL_FROM}")
     private String fromEmail;
-
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
     /**
-     * Sends a verification email with OTP code
+     * Sends a verification email with OTP code (runs in background — does not block the caller)
      */
+    @Async
     public void sendVerificationEmail(String to, String username, String otp) {
         try {
             String subject = "Verify Your Account - Huza Auth Service";
@@ -38,13 +37,15 @@ public class EmailService {
 
         } catch (Exception e) {
             log.error(" Failed to send verification email to {}: {}", to, e.getMessage());
-            throw new RuntimeException("Failed to send verification email: " + e.getMessage(), e);
+            // Don't rethrow here — this runs async, an uncaught exception just gets logged.
+            // Rethrowing would only be visible in server logs, not to the original caller.
         }
     }
 
     /**
-     * Sends a password reset email with OTP
+     * Sends a password reset email with OTP (runs in background)
      */
+    @Async
     public void sendPasswordResetEmail(String to, String username, String otp) {
         try {
             String subject = "Password Reset Request - Huza Auth Service";
@@ -55,21 +56,83 @@ public class EmailService {
 
         } catch (Exception e) {
             log.error(" Failed to send password reset email to {}: {}", to, e.getMessage());
-            throw new RuntimeException("Failed to send password reset email: " + e.getMessage(), e);
         }
     }
 
-    private void sendEmail(String to, String subject, String content)
-            throws MessagingException, UnsupportedEncodingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    /**
+     * Send OTP for password reset (runs in background)
+     */
+    @Async
+    public void sendPasswordResetOtp(String to, String otp) {
+        try {
+            String subject = "🔐 Password Reset OTP - Huza";
+            String content = buildPasswordResetOtpContent(otp);
+            sendEmail(to, subject, content);
+            log.info("📧 Password reset OTP sent successfully to: {}", to);
+        } catch (Exception e) {
+            log.error("❌ Failed to send password reset email to {}: {}", to, e.getMessage());
+        }
+    }
 
-        helper.setFrom(fromEmail, "Huza Auth Service");
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(content, true);
+    private void sendEmail(String to, String subject, String content) {
 
-        mailSender.send(message);
+        OkHttpClient client = new OkHttpClient();
+
+        String json = """
+    {
+      "sender": {
+        "name": "Huza Auth Service",
+        "email": "%s"
+      },
+      "to": [
+        {
+          "email": "%s"
+        }
+      ],
+      "subject": "%s",
+      "htmlContent": %s
+    }
+    """.formatted(
+                fromEmail,
+                to,
+                subject,
+                "\"" + content
+                        .replace("\\", "\\\\")
+                        .replace("\"", "\\\"")
+                        .replace("\n", "\\n")
+                        + "\""
+        );
+
+
+        Request request = new Request.Builder()
+                .url("https://api.brevo.com/v3/smtp/email")
+                .addHeader("api-key", brevoApiKey)
+                .addHeader("accept", "application/json")
+                .addHeader("Content-Type", "application/json")
+                .post(RequestBody.create(
+                        json,
+                        MediaType.parse("application/json")
+                ))
+                .build();
+
+
+        try (Response response = client.newCall(request).execute()) {
+
+            String responseBody = response.body() != null
+                    ? response.body().string()
+                    : "";
+
+            log.info("Brevo response: {}", responseBody);
+
+            if (!response.isSuccessful()) {
+                throw new RuntimeException(
+                        "Brevo error: " + response.code() + " " + responseBody
+                );
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException("Brevo connection failed", e);
+        }
     }
 
     private String buildVerificationEmailContent(String username, String otp) {
@@ -177,20 +240,6 @@ public class EmailService {
             </html>
             """, username, otp);
 
-    }
-    /**
-     * Send OTP for password reset
-     */
-    public void sendPasswordResetOtp(String to, String otp) {
-        try {
-            String subject = "🔐 Password Reset OTP - Huza";
-            String content = buildPasswordResetOtpContent(otp);
-            sendEmail(to, subject, content);
-            log.info("📧 Password reset OTP sent successfully to: {}", to);
-        } catch (Exception e) {
-            log.error("❌ Failed to send password reset email to {}: {}", to, e.getMessage());
-            throw new RuntimeException("Failed to send password reset email: " + e.getMessage(), e);
-        }
     }
 
     /**

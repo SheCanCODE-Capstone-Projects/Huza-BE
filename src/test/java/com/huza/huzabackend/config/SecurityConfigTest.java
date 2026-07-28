@@ -6,6 +6,7 @@ import com.huza.huzabackend.entity.User;
 import com.huza.huzabackend.repository.UserRepository;
 import com.huza.huzabackend.service.EmailService;
 import com.huza.huzabackend.service.OtpService;
+import com.huza.huzabackend.service.ApplicationService;
 import com.huza.huzabackend.service.UserService;
 import com.huza.huzabackend.service.VerificationTokenService;
 import org.junit.jupiter.api.Test;
@@ -47,10 +48,22 @@ class SecurityConfigTest {
     private OtpService otpService;
 
     @MockBean
+    private ApplicationService applicationService;
+
+    @MockBean
     private AuthenticationProvider authenticationProvider;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
+    @MockBean
+    private OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+
+    @MockBean
+    private CustomOAuth2UserService customOAuth2UserService;
 
     @Test
     void registerEndpointShouldBeAccessibleWithoutAuthentication() throws Exception {

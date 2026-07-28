@@ -1,0 +1,84 @@
+package com.huza.huzabackend.controller;
+
+import com.huza.huzabackend.dto.ApiResponse;
+import com.huza.huzabackend.dto.ChatConversationResponse;
+import com.huza.huzabackend.dto.MessageResponse;
+import com.huza.huzabackend.dto.SendMessageRequest;
+import com.huza.huzabackend.service.MessageService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/recruiter/messages")
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
+public class RecruiterMessageController {
+
+    private final MessageService messageService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<MessageResponse>>> inbox(Authentication authentication) {
+        String email = authentication.getName();
+        List<MessageResponse> messages = messageService.getInboxByEmail(email);
+        return ResponseEntity.ok(ApiResponse.success("Inbox retrieved successfully", messages));
+    }
+
+    @GetMapping("/conversations")
+    public ResponseEntity<ApiResponse<List<ChatConversationResponse>>> getConversations(Authentication authentication) {
+        String email = authentication.getName();
+        List<ChatConversationResponse> conversations = messageService.getConversationsList(email);
+        return ResponseEntity.ok(ApiResponse.success("Conversations retrieved successfully", conversations));
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<List<MessageResponse>>> getConversation(
+            Authentication authentication,
+            @PathVariable String userId) {
+
+        String email = authentication.getName();
+
+        if ("me".equals(userId)) {
+            List<MessageResponse> messages = messageService.getInboxByEmail(email);
+            return ResponseEntity.ok(
+                    ApiResponse.success("Inbox retrieved successfully", messages)
+            );
+        }
+
+        List<MessageResponse> messages = messageService.getConversation(email, userId);
+        return ResponseEntity.ok(
+                ApiResponse.success("Conversation retrieved successfully", messages)
+        );
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<MessageResponse>> sendMessage(
+            Authentication authentication,
+            @Valid @RequestBody SendMessageRequest request) {
+
+        String senderEmail = authentication.getName();
+        MessageResponse response = messageService.sendMessage(senderEmail, request);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Message sent successfully", response));
+    }
+
+    @PutMapping("/{id}/read")
+    public ResponseEntity<ApiResponse<String>> markAsRead(
+            Authentication authentication,
+            @PathVariable String id) {
+
+        String email = authentication.getName();
+        messageService.markAsRead(id, email);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Message marked as read", null)
+        );
+    }
+}

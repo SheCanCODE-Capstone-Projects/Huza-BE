@@ -1,5 +1,7 @@
 package com.huza.huzabackend.controller;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import com.huza.huzabackend.dto.*;
 import com.huza.huzabackend.entity.User;
 import com.huza.huzabackend.service.EmailService;
@@ -25,6 +27,23 @@ public class AuthController {
     private final VerificationTokenService verificationTokenService;
     private final EmailService emailService;
     private final OtpService otpService;
+
+    @GetMapping("/test-mail-connection")
+    public String testMailConnection() {
+        try {
+            Socket socket = new Socket();
+            socket.connect(
+                    new InetSocketAddress("smtp-relay.brevo.com", 587),
+                    5000
+            );
+            socket.close();
+
+            return "SMTP connection successful";
+
+        } catch (Exception e) {
+            return "SMTP failed: " + e.getMessage();
+        }
+    }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
