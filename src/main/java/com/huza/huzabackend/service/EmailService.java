@@ -19,8 +19,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${BREVO_API_KEY}")
-    private String brevoApiKey;
+
     @Value("${app.mail.from}")
     private String fromEmail;
     @Value("${app.frontend.url}")
