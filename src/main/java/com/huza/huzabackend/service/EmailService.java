@@ -19,9 +19,8 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${app.mail.from}")
     private String fromEmail;
-
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
