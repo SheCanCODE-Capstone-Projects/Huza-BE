@@ -24,6 +24,21 @@ public class UserManagementController {
 
     private final UserService userService;
 
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<java.util.List<User>>> getAllUsers() {
+        log.info("Admin accessing endpoint to fetch all users");
+
+        try {
+            java.util.List<User> users = userService.findAllUsers();
+            return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", users));
+        } catch (Exception e) {
+            log.error("Failed to fetch users: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve users: " + e.getMessage()));
+        }
+    }
+
     // YOUR TASK: Get user profile
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.username")
