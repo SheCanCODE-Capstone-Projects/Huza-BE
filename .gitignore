@@ -33,5 +33,6 @@ Thumbs.db
 # Environment
 .env.example
 .gitignore
-config.bat
 node_modules
+.vscode/
+.env
