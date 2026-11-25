@@ -35,5 +35,4 @@ Thumbs.db
 .gitignore
 branch_structure.json
 node_modules
-.vscode/
-.env
+config.bat
